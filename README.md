@@ -70,9 +70,19 @@ menos transparência e mais contraste.
 | `assets/dados-medicamentos.js` | Base de medicamentos e posologias |
 | `assets/dados-prontuario.js` | Queixas e frases do prontuário |
 
-## Link de teste online
+## Site de teste
 
-Versão publicada como artefato privado do Claude:
+https://gabrielsouzaf77-rgb.github.io/rx-plantao/
+
+Hospedado no GitHub Pages a partir da branch `main` deste repositório
+(github.com/gabrielsouzaf77-rgb/rx-plantao, público). Abre sem login no
+celular e no computador, e a impressão funciona. Para atualizar o site, basta
+fazer commit e `git push`; o GitHub republica em cerca de um minuto. A página
+pede aos buscadores que não a indexem.
+
+## Link de teste no Claude
+
+Versão publicada como artefato privado do Claude (sem impressão):
 https://claude.ai/artifact/HTJJqhwMsherfLqMW2gy9j
 
 A página publicada é o miolo do `<body>` de `index.html` (sem `<html>`,
