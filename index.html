@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Rx Plantão</title>
+  <meta name="description" content="Agiliza a redação da prescrição e do prontuário no plantão.">
+  <meta name="theme-color" content="#eef6fe">
+  <!-- Versão de teste: fora dos buscadores. -->
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="entrando" data-tab="prescricao">
+
+  <header class="top">
+    <div class="brand">
+      <span class="brand__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 6.5v11M6.5 12h11"/></svg></span>
+      <span class="brand__name">Rx Plantão</span>
+    </div>
+
+    <nav class="tabs" role="tablist" aria-label="Áreas" data-ativo="prescricao">
+      <button class="tabs__btn" role="tab" id="tabbtn-prescricao" data-tab="prescricao" aria-selected="true" aria-controls="tab-prescricao">Prescrição</button>
+      <button class="tabs__btn" role="tab" id="tabbtn-prontuario" data-tab="prontuario" aria-selected="false" aria-controls="tab-prontuario">Prontuário</button>
+    </nav>
+
+    <div class="top__dir">
+      <div class="acoes" id="acoes">
+        <button class="btn" id="btnCopiar" type="button">Copiar</button>
+        <button class="btn btn--primario" id="btnImprimir" type="button">Imprimir</button>
+      </div>
+      <div class="menu" id="menu">
+        <button class="btn btn--icone" id="btnMenu" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="menuLista" aria-label="Mais opções">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/></svg>
+        </button>
+        <div class="menu__lista" id="menuLista" role="menu">
+          <button type="button" role="menuitem" id="btnSalvarModelo">Salvar como modelo</button>
+          <button type="button" role="menuitem" id="btnLimpar">Nova receita</button>
+          <button type="button" role="menuitem" id="btnLimparPront" hidden>Limpar prontuário</button>
+          <hr>
+          <button type="button" role="menuitem" id="btnPerfil"><span id="perfilResumo">Meus dados</span></button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===================== PRESCRIÇÃO: a própria receita é a tela ===================== -->
+    <section class="work" id="tab-prescricao" role="tabpanel" aria-labelledby="tabbtn-prescricao">
+      <ul class="pendencias" id="pendencias" aria-live="polite"></ul>
+
+      <article class="folha" id="folha" aria-label="Receita">
+        <header class="folha__cab" id="folhaCab"></header>
+
+        <div class="folha__pac">
+          <label class="cmp cmp--nome"><span>Paciente</span><input type="text" id="pacNome" autocomplete="off" placeholder="Nome completo"></label>
+          <label class="cmp"><span>Idade</span><input type="text" id="pacIdade" autocomplete="off" placeholder="34 anos"></label>
+          <label class="cmp"><span>Sexo</span>
+            <select id="pacSexo">
+              <option value="">Selecionar</option>
+              <option value="Feminino">Feminino</option>
+              <option value="Masculino">Masculino</option>
+            </select>
+          </label>
+          <label class="cmp cmp--end" id="cmpEndereco" hidden><span>Endereço</span><input type="text" id="pacEndereco" autocomplete="off" placeholder="Rua, número, bairro"></label>
+          <button type="button" class="mais" id="btnEndereco">+ Endereço</button>
+        </div>
+
+        <div class="folha__corpo">
+          <div id="itens"></div>
+
+          <!-- Ponto de escrita: onde o próximo medicamento entra na receita -->
+          <div class="compor" id="compor">
+            <div class="compor__campo">
+              <svg class="compor__lupa" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+              <button type="button" class="busca__med" id="buscaMed" title="Trocar de medicamento" hidden></button>
+              <div class="busca__campo">
+                <div class="busca__fantasma" id="buscaFantasma" aria-hidden="true"></div>
+                <input type="text" id="busca" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="Adicionar medicamento" aria-controls="resultados" aria-autocomplete="list">
+              </div>
+              <kbd class="busca__kbd">/</kbd>
+            </div>
+
+            <div class="pop" id="pop">
+              <p class="pop__titulo" id="resultadosTitulo"></p>
+              <ul class="resultados" id="resultados" role="listbox" aria-label="Medicamentos"></ul>
+            </div>
+
+            <div class="sugestoes">
+              <p class="rotulo" id="atalhosTitulo">Comuns no plantão</p>
+              <ul class="atalhos" id="atalhos"></ul>
+              <div id="modelosBox" hidden>
+                <p class="rotulo">Meus modelos</p>
+                <ul class="modelos" id="modelos"></ul>
+              </div>
+            </div>
+          </div>
+
+          <section class="bloco">
+            <h3 class="via__nome">Orientações</h3>
+            <textarea class="rx__orienta" id="orientacoes" rows="1" placeholder="Orientações ao paciente (opcional)"></textarea>
+          </section>
+
+          <p class="atb" id="carimbo" hidden>Antimicrobiano · sai em 2 vias · válida por 10 dias</p>
+        </div>
+
+        <footer class="folha__rodape" id="folhaRodape"></footer>
+      </article>
+
+      <p class="aviso">Base de medicamentos em revisão clínica. Confira dose, intervalo e duração antes de assinar. Não inclui medicamentos de controle especial.</p>
+    </section>
+
+    <!-- ===================== PRONTUÁRIO ===================== -->
+    <section class="work" id="tab-prontuario" role="tabpanel" aria-labelledby="tabbtn-prontuario" hidden>
+      <article class="folha folha--pront" aria-label="Prontuário">
+        <div class="queixas">
+          <span class="rotulo">Queixa</span>
+          <div class="chips" id="queixas" role="radiogroup" aria-label="Queixa"></div>
+        </div>
+        <div class="secoes" id="secoes"></div>
+      </article>
+
+      <p class="aviso">As frases só entram quando você clica. Registre apenas o que foi perguntado e examinado.</p>
+    </section>
+  </main>
+
+  <dialog class="dlg" id="dlgPerfil" aria-labelledby="dlgPerfilTitulo">
+    <form method="dialog" id="formPerfil">
+      <h2 id="dlgPerfilTitulo">Meus dados</h2>
+      <p class="dlg__sub">Aparecem no cabeçalho e na assinatura da receita. Ficam salvos só neste navegador.</p>
+      <div class="dlg__grid">
+        <label class="cmp cmp--full"><span>Nome do médico</span><input name="nome" autocomplete="name" placeholder="Dr(a). Nome Sobrenome"></label>
+        <label class="cmp"><span>CRM</span><input name="crm" inputmode="numeric" placeholder="000000"></label>
+        <label class="cmp"><span>UF</span><input name="uf" maxlength="2" placeholder="SP"></label>
+        <label class="cmp cmp--full"><span>Especialidade ou RQE (opcional)</span><input name="especialidade" placeholder="Clínica Médica · RQE 00000"></label>
+        <label class="cmp cmp--full"><span>Unidade</span><input name="unidade" placeholder="UPA 24h"></label>
+        <label class="cmp cmp--full"><span>Endereço da unidade</span><input name="endereco" placeholder="Rua, número, bairro"></label>
+        <label class="cmp"><span>Cidade</span><input name="cidade" placeholder="Cidade"></label>
+        <label class="cmp"><span>Telefone</span><input name="telefone" inputmode="tel" placeholder="(00) 0000-0000"></label>
+      </div>
+      <div class="dlg__acoes">
+        <button class="btn" type="button" data-fechar>Cancelar</button>
+        <button class="btn btn--primario" value="salvar" type="submit">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="dlg dlg--pequeno" id="dlgModelo" aria-labelledby="dlgModeloTitulo">
+    <form method="dialog" id="formModelo">
+      <h2 id="dlgModeloTitulo">Salvar como modelo</h2>
+      <p class="dlg__sub">A receita atual volta com um clique na próxima vez.</p>
+      <label class="cmp cmp--full"><span>Nome do modelo</span><input name="nome" required maxlength="60" placeholder="Amigdalite adulto"></label>
+      <div class="dlg__acoes">
+        <button class="btn" type="button" data-fechar>Cancelar</button>
+        <button class="btn btn--primario" value="salvar" type="submit">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div id="impressao" aria-hidden="true"></div>
+
+  <script src="assets/dados-medicamentos.js"></script>
+  <script src="assets/dados-prontuario.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
