@@ -48,9 +48,16 @@
     padroes: guarda.ler('padroes', {}),
     modelos: guarda.ler('modelos', []),
     uso: guarda.ler('uso', {}),
+    // Uso acumulado neste aparelho: receitas feitas, tempo medido e onde a base não atendeu. Nenhum dado de paciente.
+    metricas: { receitas: 0, segundos: 0, semResultado: [], alteradas: {}, ...guarda.ler('metricas', {}) },
+    inicio: 0, // quando a receita atual começou a ser escrita
+    concluida: false, // a receita atual já foi impressa ou copiada
     pront: { queixa: 'geral', sec: {} },
   };
   let seq = 0;
+
+  const duracao = (s) => (s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')} s`);
+  const marcarInicio = () => { if (!estado.inicio) estado.inicio = Date.now(); };
 
   // Campos de texto da folha crescem com o conteúdo, como texto corrido.
   function ajustarAltura(area) {
@@ -162,10 +169,26 @@
     $('#atalhos').innerHTML = atalhos().map((e) => `
       <li><button type="button" class="atalho" data-ap="${esc(e.ap.id)}">${esc(e.med.nome)} <span>${esc(e.ap.conc)}</span></button></li>`).join('');
     $('#modelosBox').hidden = !estado.modelos.length;
+    renderAcumulado();
+  }
+
+  // Busca que não acha nada mostra o que falta na base. Só registra quando o médico para de digitar.
+  let semResultadoTimer;
+  function anotarSemResultado(consulta) {
+    const q = norm(consulta).trim();
+    if (q.length < 4) return;
+    semResultadoTimer = setTimeout(() => {
+      const lista = estado.metricas.semResultado;
+      if (norm($('#busca').value).trim() !== q || lista.includes(q)) return;
+      lista.push(q);
+      if (lista.length > 30) lista.shift();
+      guarda.gravar('metricas', estado.metricas);
+    }, 1500);
   }
 
   // O painel de resultados só existe enquanto há algo a escolher e o médico está na linha de escrita.
   function renderResultados() {
+    clearTimeout(semResultadoTimer);
     const busca = $('#busca');
     const consulta = busca.value;
     const lista = $('#resultados');
@@ -207,6 +230,7 @@
     if (!estado.resultados.length) {
       titulo.textContent = '';
       lista.innerHTML = `<li class="resultados__nada">Nada encontrado para “${esc(consulta.trim())}”. Tente o nome genérico.</li>`;
+      anotarSemResultado(consulta);
       return;
     }
 
@@ -279,6 +303,7 @@
       qtdTocada: false,
     };
     estado.itens.push(item);
+    marcarInicio();
     estado.uso[apId] = (estado.uso[apId] || 0) + 1;
     guarda.gravar('uso', estado.uso);
     return item;
@@ -432,17 +457,40 @@
     if (temAntimicrobiano() && (!pac.idade.trim() || !pac.sexo)) lista.push('Receita de antimicrobiano precisa de idade e sexo do paciente.');
     const comLacuna = estado.itens.filter((it) => /_{2,}/.test(it.texto)).map((it) => POR_AP.get(it.apId).med.nome);
     if (comLacuna.length) lista.push(`Preencha a dose (____) em: ${comLacuna.join(', ')}.`);
-    if (!estado.perfil.nome || !estado.perfil.crm) lista.push('Seus dados estão incompletos: a receita sai sem nome ou CRM.');
     return lista;
+  }
+
+  // O que o médico já construiu aqui. Só fatos medidos: nada de estimativa de tempo economizado.
+  function renderAcumulado() {
+    const m = estado.metricas;
+    const el = $('#acumulado');
+    el.hidden = !m.receitas;
+    if (!m.receitas) return;
+    const partes = [
+      `${m.receitas} ${m.receitas === 1 ? 'receita feita' : 'receitas feitas'} neste aparelho`,
+      `tempo médio de ${duracao(Math.round(m.segundos / m.receitas))}`,
+    ];
+    const padroes = Object.keys(estado.padroes).length;
+    const modelos = estado.modelos.length;
+    if (padroes) partes.push(`${padroes} ${padroes === 1 ? 'padrão seu' : 'padrões seus'}`);
+    if (modelos) partes.push(`${modelos} ${modelos === 1 ? 'modelo' : 'modelos'}`);
+    el.textContent = partes.join(' · ');
   }
 
   // Atualiza o que muda em volta dos itens, sem mexer nos campos em que o médico está digitando.
   function atualizarFolha() {
     const pf = estado.perfil;
+    // Valor primeiro, pedido depois: os dados do médico só são cobrados quando já existe receita na folha.
+    const pedir = estado.itens.length > 0;
+    const primeiroUso = !estado.itens.length && !estado.metricas.receitas;
+
+    $('#inicio').hidden = !primeiroUso;
+    $('#btnExemplo').hidden = !primeiroUso;
+    renderAcumulado();
 
     $('#folhaCab').innerHTML = `
       <button type="button" class="folha__editar" data-abrir="perfil" title="Editar meus dados">
-        <p class="folha__unidade">${pf.unidade ? esc(pf.unidade) : '<span class="falta">Preencher dados da unidade</span>'}</p>
+        <p class="folha__unidade">${pf.unidade ? esc(pf.unidade) : (pedir ? '<span class="falta">Preencher dados da unidade</span>' : '<span class="folha__vago">Sua unidade</span>')}</p>
         <p class="folha__local">${localDaUnidade(pf)}</p>
       </button>
       <p class="folha__tipo">Receituário</p>`;
@@ -452,7 +500,7 @@
       <div class="folha__assina">
         <span class="folha__traco"></span>
         <button type="button" class="folha__editar" data-abrir="perfil" title="Editar meus dados">
-          <p class="folha__medico">${pf.nome ? esc(pf.nome) : '<span class="falta">Preencher nome e CRM</span>'}</p>
+          <p class="folha__medico">${pf.nome ? esc(pf.nome) : (pedir ? '<span class="falta">Preencher nome e CRM</span>' : '<span class="folha__vago">Seu nome e CRM</span>')}</p>
           <p class="folha__crm">${crmFormatado(pf)}</p>
           ${pf.especialidade ? `<p class="folha__esp">${esc(pf.especialidade)}</p>` : ''}
         </button>
@@ -529,12 +577,42 @@
     return itens + (estado.orientacoes.trim() ? `\n\nORIENTAÇÕES\n${estado.orientacoes.trim()}` : '');
   }
 
-  function imprimir() {
+  // Receita pronta: é aqui que o produto cumpre o que promete, então o tempo medido aparece na hora.
+  // Devolve a frase com o tempo, ou vazio se esta receita já foi contada ou é o exemplo.
+  function concluir() {
+    if (estado.concluida || !estado.inicio || estado.exemplo) return '';
+    estado.concluida = true;
+    // Teto de 15 minutos: acima disso o médico saiu e voltou, não estava escrevendo.
+    const seg = Math.min(900, Math.max(1, Math.round((Date.now() - estado.inicio) / 1000)));
+    const m = estado.metricas;
+    m.receitas += 1;
+    m.segundos += seg;
+    // Posologia reescrita à mão indica que o padrão da base não é o que o médico usa.
+    estado.itens.filter(textoFoiAlterado).forEach((it) => {
+      const { med, ap } = POR_AP.get(it.apId);
+      const anterior = m.alteradas[it.apId];
+      m.alteradas[it.apId] = { nome: `${med.nome} ${ap.conc}`, texto: it.texto.trim(), vezes: (anterior ? anterior.vezes : 0) + 1 };
+    });
+    guarda.gravar('metricas', m);
+    renderAcumulado();
+    renderPerfil();
+    return m.receitas === 1 ? `Sua primeira receita ficou pronta em ${duracao(seg)}.` : `Receita pronta em ${duracao(seg)}.`;
+  }
+
+  // forcar: imprime mesmo sem nome e CRM (o médico decidiu assim, ou acabou de sair do preenchimento).
+  function imprimir(forcar) {
     if (!estado.itens.length) return avisar('Escolha um medicamento antes de imprimir.');
+    // Os dados do médico são pedidos aqui, na hora em que fazem falta, e uma vez só.
+    if (!forcar && !(estado.perfil.nome && estado.perfil.crm)) {
+      estado.imprimirAoSalvar = true;
+      return abrirPerfil('Falta seu nome e CRM para a receita sair completa. Você preenche uma vez só e fica salvo neste navegador.');
+    }
     // RDC 471/2021, art. 10: a 2ª via fica retida na farmácia e a 1ª volta com o paciente.
     const vias = temAntimicrobiano() ? ['1ª via · paciente', '2ª via · retenção na farmácia'] : [''];
     $('#impressao').innerHTML = vias.map((v) => `<article class="folha folha--impressa">${folhaParaImprimir(v)}</article>`).join('');
+    const tempo = concluir();
     window.print();
+    if (tempo) avisar(tempo);
   }
 
   /* ------------------------------------------------------------------ */
@@ -726,8 +804,54 @@
   function renderPerfil() {
     const pf = estado.perfil;
     const ok = Boolean(pf.nome && pf.crm);
-    $('#btnMenu').classList.toggle('btn--pendente', !ok);
+    // O lembrete no menu só aparece depois que o médico já fez uma receita aqui.
+    $('#btnMenu').classList.toggle('btn--pendente', !ok && estado.metricas.receitas > 0);
     $('#perfilResumo').textContent = ok ? `Meus dados · ${pf.nome}` : 'Preencher meus dados';
+  }
+
+  // O que este aparelho registrou, pronto para o médico mandar a quem cuida do sistema.
+  function dadosDoResumo() {
+    const m = estado.metricas;
+    const maisUsados = Object.entries(estado.uso)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .filter(([apId]) => POR_AP.has(apId))
+      .map(([apId, n]) => { const { med, ap } = POR_AP.get(apId); return `${med.nome} ${ap.conc} (${n})`; });
+    return {
+      receitas: m.receitas,
+      media: m.receitas ? duracao(Math.round(m.segundos / m.receitas)) : '',
+      maisUsados,
+      semResultado: m.semResultado.slice(),
+      alteradas: Object.values(m.alteradas).sort((a, b) => b.vezes - a.vezes),
+    };
+  }
+
+  function textoDoResumo() {
+    const r = dadosDoResumo();
+    const linhas = ['Rx Plantão: resumo de uso', `Receitas feitas: ${r.receitas}${r.media ? ` (tempo médio de ${r.media})` : ''}`];
+    if (r.maisUsados.length) linhas.push(`Mais usados: ${r.maisUsados.join(', ')}`);
+    linhas.push(`Buscas sem resultado: ${r.semResultado.length ? r.semResultado.join(', ') : 'nenhuma'}`);
+    if (r.alteradas.length) {
+      linhas.push('Posologias que reescrevi:');
+      r.alteradas.forEach((a) => linhas.push(`- ${a.nome}: "${a.texto}" (${a.vezes}x)`));
+    } else {
+      linhas.push('Posologias que reescrevi: nenhuma');
+    }
+    return linhas.join('\n');
+  }
+
+  function abrirResumo() {
+    const r = dadosDoResumo();
+    const lista = (itens) => (itens.length ? `<ul>${itens.map((i) => `<li>${i}</li>`).join('')}</ul>` : '<p class="resumo__vazio">Nada até agora.</p>');
+    $('#resumoCorpo').innerHTML = `
+      <div class="resumo__numeros">
+        <p><strong>${r.receitas}</strong><span>${r.receitas === 1 ? 'receita feita' : 'receitas feitas'}</span></p>
+        <p><strong>${r.media || '—'}</strong><span>tempo médio</span></p>
+      </div>
+      <h3>Mais usados</h3>${lista(r.maisUsados.map(esc))}
+      <h3>Buscas sem resultado</h3>${lista(r.semResultado.map(esc))}
+      <h3>Posologias que você reescreveu</h3>${lista(r.alteradas.map((a) => `<strong>${esc(a.nome)}</strong> ${esc(a.texto)} <span>${a.vezes}x</span>`))}`;
+    abrirDialogo('#dlgResumo');
   }
 
   // returnValue sobrevive entre aberturas; sem zerar, um Esc repetiria o último "salvar".
@@ -737,9 +861,13 @@
     dlg.showModal();
   }
 
-  function abrirPerfil() {
+  const PERFIL_SUB = 'Aparecem no cabeçalho e na assinatura da receita. Ficam salvos só neste navegador.';
+
+  // motivo: por que o preenchimento está sendo pedido agora (por exemplo, na hora de imprimir).
+  function abrirPerfil(motivo) {
     const form = $('#formPerfil');
     CAMPOS_PERFIL.forEach((c) => { form.elements[c].value = estado.perfil[c] || ''; });
+    $('#dlgPerfilSub').textContent = typeof motivo === 'string' ? motivo : PERFIL_SUB;
     abrirDialogo('#dlgPerfil');
   }
 
@@ -783,9 +911,13 @@
     const vazia = !estado.itens.length && !estado.orientacoes.trim() && !Object.values(estado.paciente).some((v) => v.trim());
     if (vazia) return $('#busca').focus();
     const antes = { itens: estado.itens, paciente: { ...estado.paciente }, orientacoes: estado.orientacoes };
+    const relogio = { inicio: estado.inicio, concluida: estado.concluida };
     estado.itens = [];
     estado.paciente = { nome: '', idade: '', sexo: '', endereco: '' };
     estado.orientacoes = '';
+    estado.inicio = 0;
+    estado.concluida = false;
+    estado.exemplo = false;
     voltarParaNome('');
     preencherCampos();
     renderItens();
@@ -793,6 +925,8 @@
       estado.itens = antes.itens;
       estado.paciente = antes.paciente;
       estado.orientacoes = antes.orientacoes;
+      estado.inicio = relogio.inicio;
+      estado.concluida = relogio.concluida;
       preencherCampos();
       renderItens();
       renderResultados();
@@ -801,8 +935,12 @@
     if (comMouse()) $('#pacNome').focus();
   }
 
-  // Só na versão de demonstração: abre com uma receita de exemplo, sem contar como uso do médico.
+  // Receita de exemplo: mostra o destino antes de o médico escrever a dele. Não conta como uso nem tem tempo medido.
   function carregarExemplo() {
+    estado.itens = [];
+    estado.inicio = 0;
+    estado.concluida = false;
+    estado.exemplo = true;
     estado.paciente = { nome: 'Paciente Exemplo', idade: '34 anos', sexo: 'Feminino', endereco: '' };
     ['amoxicilina-500', 'dipirona-500'].forEach((apId) => {
       const p = posologiasDe(POR_AP.get(apId).ap)[0];
@@ -871,6 +1009,7 @@
     [['#pacNome', 'nome'], ['#pacIdade', 'idade'], ['#pacSexo', 'sexo'], ['#pacEndereco', 'endereco']].forEach(([sel, campo]) => {
       $(sel).addEventListener('input', (ev) => {
         estado.paciente[campo] = ev.target.value;
+        marcarInicio();
         atualizarFolha();
       });
     });
@@ -943,7 +1082,13 @@
     $('#btnLimpar').addEventListener('click', novaReceita);
     $('#btnLimparPront').addEventListener('click', limparProntuario);
 
-    $('#btnImprimir').addEventListener('click', imprimir);
+    $('#btnImprimir').addEventListener('click', () => imprimir());
+    $('#btnExemplo').addEventListener('click', carregarExemplo);
+    $('#btnResumo').addEventListener('click', abrirResumo);
+    $('#btnCopiarResumo').addEventListener('click', () => {
+      $('#dlgResumo').close('copiar');
+      copiar(textoDoResumo(), 'Resumo copiado. É só colar na conversa e enviar.');
+    });
     // Copiar segue a área em que o médico está.
     $('#btnCopiar').addEventListener('click', () => {
       if (document.body.dataset.tab === 'prontuario') {
@@ -952,7 +1097,8 @@
         return copiar(texto, 'Prontuário copiado. É só colar no sistema da unidade.');
       }
       if (!estado.itens.length) return avisar('Escolha um medicamento antes de copiar.');
-      copiar(textoDaReceita(), 'Prescrição copiada. É só colar no sistema da unidade.');
+      const tempo = concluir();
+      copiar(textoDaReceita(), tempo ? `${tempo} Copiada: é só colar no sistema da unidade.` : 'Prescrição copiada. É só colar no sistema da unidade.');
     });
     $('#btnSalvarModelo').addEventListener('click', () => {
       if (!estado.itens.length) return avisar('Escreva a receita antes de salvar como modelo.');
@@ -968,13 +1114,20 @@
     $('#btnPerfil').addEventListener('click', abrirPerfil);
     $('#folha').addEventListener('click', (ev) => { if (ev.target.closest('[data-abrir="perfil"]')) abrirPerfil(); });
     $('#dlgPerfil').addEventListener('close', (ev) => {
-      if (ev.target.returnValue !== 'salvar') return;
+      // Se o preenchimento foi pedido na hora de imprimir, a impressão segue de onde parou.
+      const iaImprimir = estado.imprimirAoSalvar;
+      estado.imprimirAoSalvar = false;
+      if (ev.target.returnValue !== 'salvar') {
+        if (iaImprimir) avisar('A receita não foi impressa.', 'Imprimir sem meus dados', () => imprimir(true));
+        return;
+      }
       const dados = Object.fromEntries(new FormData($('#formPerfil')).entries());
       Object.keys(dados).forEach((c) => { dados[c] = dados[c].trim(); });
       estado.perfil = dados;
       guarda.gravar('perfil', dados);
       renderPerfil();
       atualizarFolha();
+      if (iaImprimir) return imprimir(true);
       avisar('Dados salvos neste navegador.');
     });
 
@@ -1006,5 +1159,7 @@
   renderSecoes();
   trocarAba('prescricao');
   if (window.RX_EXEMPLO) carregarExemplo();
+  // Com teclado, o cursor já começa na linha de escrita: a primeira ação é digitar o remédio.
+  else if (comMouse()) $('#busca').focus({ preventScroll: true });
   setTimeout(() => document.body.classList.remove('entrando'), 900);
 })();

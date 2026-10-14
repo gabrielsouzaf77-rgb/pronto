@@ -41,6 +41,29 @@ saem pelo mesmo caminho por onde entraram, e ações secundárias um nível abai
 (menu "⋯" e opções do item). Respeita as preferências de menos movimento,
 menos transparência e mais contraste.
 
+## Primeiro uso e medição
+
+Desenhado com a skill revenue-centric-design
+(github.com/heliocosta-dev/revenue-centric-design), no que serve ao estágio de
+MVP: encurtar o caminho até a primeira receita pronta.
+
+- **Uma ação só no primeiro uso:** a folha abre com "Comece pelo remédio", o
+  cursor já na busca, os atalhos de um clique e uma receita de exemplo.
+- **Valor primeiro, pedido depois:** nome e CRM só são pedidos na hora de
+  imprimir, uma vez. Antes da primeira receita, cabeçalho e assinatura são
+  lugares reservados, sem cobrança.
+- **Tempo medido:** ao imprimir ou copiar, o sistema mostra em quanto tempo a
+  receita ficou pronta. É um número medido, não uma estimativa de economia.
+- **O que o médico acumulou:** receitas feitas, tempo médio, padrões e modelos
+  aparecem abaixo da folha.
+- **Resumo de uso** (menu "⋯"): receitas, tempo médio, mais usados, buscas sem
+  resultado e posologias reescritas, com botão de copiar para o médico enviar.
+  Fica só no aparelho, sem nenhum dado de paciente. É a fonte para corrigir a
+  base de medicamentos.
+
+Ficaram de fora, de propósito, as táticas da skill baseadas em medo de perda,
+escassez ou hábito forçado: não cabem numa ferramenta médica.
+
 ## Decisões que não devem ser desfeitas sem conversa
 
 - **O software não calcula dose nem sugere tratamento.** Ele mostra informação
