@@ -12,8 +12,9 @@
 
   window.RX_PRONTUARIO = {
     secoes: [
-      { id: 'hda', titulo: 'Queixa e história', rotulo: 'QP/HDA', dica: 'Clique nas frases ou escreva livremente.' },
-      { id: 'ant', titulo: 'Antecedentes', rotulo: 'Antecedentes', dica: 'Comorbidades, alergias e medicações em uso.' },
+      { id: 'qp', titulo: 'Queixa principal', rotulo: 'QP', dica: 'Nas palavras do paciente, com o tempo de evolução.' },
+      { id: 'hda', titulo: 'História da doença atual', rotulo: 'HDA', dica: 'Clique nas frases ou escreva livremente.' },
+      { id: 'ant', titulo: 'História pregressa', rotulo: 'HPP', dica: 'Comorbidades, alergias e medicações em uso.' },
       { id: 'ef', titulo: 'Exame físico', rotulo: 'Exame físico', dica: 'Só o que foi examinado.' },
       { id: 'hd', titulo: 'Hipótese diagnóstica', rotulo: 'HD', dica: 'Hipótese e CID, se quiser.' },
       { id: 'cd', titulo: 'Conduta', rotulo: 'Conduta', dica: 'O que foi feito e orientado.' },
@@ -86,48 +87,48 @@
     },
 
     queixas: [
-      { id: 'geral', nome: 'Geral', hda: [
+      { id: 'geral', nome: 'Geral', qp: [], hda: [
         k('refere __ há __ dias'), k('início súbito'), k('início gradual'), k('nega febre'), k('nega trauma'),
         k('nega episódios prévios semelhantes'), k('fez uso de __, sem melhora'),
       ], hd: [] },
 
-      { id: 'gripal', nome: 'Síndrome gripal', hda: [
+      { id: 'gripal', nome: 'Síndrome gripal', qp: [k('tosse há __ dias'), k('febre há __ dias'), k('coriza'), k('dor de garganta'), k('dor no corpo')], hda: [
         k('tosse seca há __ dias'), k('tosse produtiva há __ dias'), k('coriza'), k('obstrução nasal'), k('odinofagia'),
         k('febre aferida de __ °C'), k('febre não aferida'), k('mialgia'), k('cefaleia'),
         k('nega dispneia'), k('nega dor torácica'), k('contato com pessoa com sintomas semelhantes'),
       ], hd: [k('síndrome gripal'), k('infecção de vias aéreas superiores')] },
 
-      { id: 'garganta', nome: 'Dor de garganta', hda: [
+      { id: 'garganta', nome: 'Dor de garganta', qp: [k('dor de garganta há __ dias'), k('febre'), k('dor para engolir')], hda: [
         k('odinofagia há __ dias'), k('febre aferida de __ °C'), k('febre não aferida'), k('nega tosse'), k('nega coriza'),
         k('disfagia'), k('nega dispneia'), k('nega trismo'),
       ], hd: [k('faringoamigdalite aguda')] },
 
-      { id: 'lombar', nome: 'Dor lombar', hda: [
+      { id: 'lombar', nome: 'Dor lombar', qp: [k('dor nas costas há __ dias'), k('dor lombar há __ dias')], hda: [
         k('dor lombar há __ dias'), k('início após esforço físico'), k('piora à movimentação'), k('sem irradiação'),
         k('irradiação para membro inferior __'), k('nega trauma'), k('nega febre'),
         k('nega perda de força ou alteração de sensibilidade'), k('nega incontinência urinária ou fecal'),
         k('nega sintomas urinários'),
       ], hd: [k('lombalgia mecânica aguda')] },
 
-      { id: 'cefaleia', nome: 'Cefaleia', hda: [
+      { id: 'cefaleia', nome: 'Cefaleia', qp: [k('dor de cabeça há __'), k('cefaleia há __')], hda: [
         k('cefaleia há __'), k('holocraniana'), k('hemicraniana à __'), k('pulsátil'), k('em aperto'),
         k('intensidade __/10'), k('fotofobia e fonofobia'), k('náuseas'), k('semelhante a episódios prévios'),
         k('nega início súbito'), k('nega febre'), k('nega déficit neurológico'), k('nega trauma'),
       ], hd: [k('cefaleia primária'), k('enxaqueca'), k('cefaleia tensional')] },
 
-      { id: 'gastro', nome: 'Diarreia e vômitos', hda: [
+      { id: 'gastro', nome: 'Diarreia e vômitos', qp: [k('diarreia há __ dias'), k('vômitos há __ dias'), k('dor de barriga')], hda: [
         k('diarreia há __ dias'), k('__ evacuações líquidas ao dia'), k('sem sangue ou muco'), k('vômitos, __ episódios'),
         k('dor abdominal em cólica'), k('febre não aferida'), k('nega febre'), k('aceitando líquidos'),
         k('diurese preservada'), k('contactantes com quadro semelhante'),
       ], hd: [k('gastroenterite aguda')] },
 
-      { id: 'urinario', nome: 'Sintomas urinários', hda: [
+      { id: 'urinario', nome: 'Sintomas urinários', qp: [k('ardência ao urinar há __ dias'), k('vontade de urinar toda hora')], hda: [
         k('disúria há __ dias'), k('polaciúria'), k('urgência miccional'), k('dor suprapúbica'),
         k('nega febre'), k('nega dor lombar'), k('nega hematúria'), k('nega corrimento vaginal'),
         k('nega episódios recentes semelhantes'),
       ], hd: [k('cistite aguda não complicada')] },
 
-      { id: 'arbovirose', nome: 'Suspeita de arbovirose', hda: [
+      { id: 'arbovirose', nome: 'Suspeita de arbovirose', qp: [k('febre há __ dias'), k('dor no corpo'), k('manchas na pele')], hda: [
         k('febre há __ dias'), k('mialgia'), k('cefaleia'), k('dor retro-orbitária'), k('artralgia'), k('exantema'),
         k('náuseas'), k('nega sangramentos'), k('nega dor abdominal intensa'), k('nega vômitos persistentes'),
         k('nega tontura ou desmaio'),

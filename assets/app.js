@@ -709,6 +709,7 @@
 
   function gruposDaSecao(id) {
     const queixa = PRONT.queixas.find((q) => q.id === estado.pront.queixa);
+    if (id === 'qp') return queixa.qp.length ? [{ grupo: '', chips: queixa.qp }] : [];
     if (id === 'hda') return [{ grupo: '', chips: queixa.hda }];
     if (id === 'hd') return queixa.hd.length ? [{ grupo: '', chips: queixa.hd }] : [];
     return PRONT.comuns[id] || [];
@@ -734,7 +735,10 @@
         </div>`).join('');
       return `
         <section class="sec" data-sec="${esc(s.id)}">
-          <h3 class="via__nome">${esc(s.titulo)}</h3>
+          <div class="sec__cab">
+            <h3 class="via__nome">${esc(s.titulo)}</h3>
+            <button type="button" class="sec__copiar" data-copiar-sec aria-label="Copiar ${esc(s.titulo)}">Copiar</button>
+          </div>
           <textarea class="sec__texto" rows="1" placeholder="${esc(s.dica)}" aria-label="${esc(s.titulo)}">${esc(valor)}</textarea>
           <div class="chips">${grupos}${s.id === 'cd' ? '<div class="sec__grupo"><button type="button" class="chip chip--acao" data-inserir-rx>+ Inserir prescrição atual</button></div>' : ''}</div>
         </section>`;
@@ -764,6 +768,15 @@
     const sec = ev.target.closest('.sec');
     if (!sec) return;
     const area = $('.sec__texto', sec);
+
+    // Os sistemas das UPAs têm um campo para cada parte: aqui sai só o texto desta seção, sem o rótulo.
+    if (ev.target.closest('[data-copiar-sec]')) {
+      let texto = area.value.trim();
+      const titulo = PRONT.secoes.find((s) => s.id === sec.dataset.sec).titulo;
+      if (!texto) return avisar(`${titulo}: ainda está vazio.`);
+      if (!/[.!?]$/.test(texto)) texto += '.';
+      return copiar(texto, `${titulo} copiado. É só colar no campo do sistema.`);
+    }
 
     if (ev.target.closest('[data-inserir-rx]')) {
       if (!estado.itens.length) return avisar('A receita está vazia. Escreva a prescrição primeiro.');
@@ -969,6 +982,7 @@
     $('#btnSalvarModelo').hidden = !naReceita;
     $('#btnLimpar').hidden = !naReceita;
     $('#btnLimparPront').hidden = naReceita;
+    $('#btnCopiar').textContent = naReceita ? 'Copiar' : 'Copiar tudo';
     // Campos escondidos medem altura zero; ao aparecer, voltam ao tamanho do texto.
     $$(naReceita ? '#tab-prescricao textarea' : '#secoes .sec__texto').forEach(ajustarAltura);
     window.scrollTo({ top: 0 });

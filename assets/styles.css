@@ -478,6 +478,21 @@ input.rx__qtd { height: 1.75rem; padding: 0 0.375rem; margin-right: -0.375rem; f
 .chip--queixa { padding: 0.4375rem 0.875rem; font-size: 0.875rem; }
 .secoes { display: flex; flex-direction: column; gap: 1.75rem; }
 .sec { padding-top: 1.25rem; border-top: 1px solid var(--linha); }
+.sec__cab { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.25rem; }
+.sec__cab .via__nome { margin-bottom: 0; }
+.sec__copiar {
+  height: 1.75rem;
+  padding: 0 0.6875rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--azul-claro);
+  color: var(--azul);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: background-color 0.15s, transform 0.25s var(--mola);
+}
+.sec__copiar:hover { background: var(--azul-medio); color: var(--azul-forte); }
+.sec__copiar:active { transform: scale(0.96); transition-duration: 0.1s; }
 .sec__texto {
   display: block;
   width: calc(100% + 0.75rem);
@@ -633,16 +648,17 @@ input.rx__qtd { height: 1.75rem; padding: 0 0.375rem; margin-right: -0.375rem; f
 .rx__fim { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem; font-size: 0.6875rem; letter-spacing: 0.02em; color: var(--suave); }
 .rx__fim::before, .rx__fim::after { content: ''; flex: 1; height: 1px; background: #9fb0c4; }
 
-@page { size: A4; margin: 14mm; }
+@page { size: A4; margin: 0; }
 
 @media print {
   body { background: #fff; }
   body > *:not(#impressao) { display: none !important; }
   #impressao { display: block; }
   .folha--impressa {
-    min-height: 265mm;
+    box-sizing: border-box;
+    min-height: 296mm;
     margin: 0;
-    padding: 0;
+    padding: 14mm 16mm;
     border-radius: 0;
     box-shadow: none;
     animation: none;

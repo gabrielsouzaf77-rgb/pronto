@@ -6,6 +6,8 @@
   <title>Rx Plantão</title>
   <meta name="description" content="Agiliza a redação da prescrição e do prontuário no plantão.">
   <meta name="theme-color" content="#eef6fe">
+  <!-- Versão de teste: fora dos buscadores. -->
+  <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="../assets/styles.css">
 </head>
 <body class="entrando" data-tab="prescricao">
@@ -35,6 +37,7 @@
           <button type="button" role="menuitem" id="btnLimpar">Nova receita</button>
           <button type="button" role="menuitem" id="btnLimparPront" hidden>Limpar prontuário</button>
           <hr>
+          <button type="button" role="menuitem" id="btnResumo">Resumo de uso</button>
           <button type="button" role="menuitem" id="btnPerfil"><span id="perfilResumo">Meus dados</span></button>
         </div>
       </div>
@@ -66,6 +69,12 @@
         <div class="folha__corpo">
           <div id="itens"></div>
 
+          <!-- Primeiro uso: uma ação só, a que leva mais rápido à receita pronta -->
+          <div class="inicio" id="inicio" hidden>
+            <h2 class="inicio__titulo">Comece pelo remédio</h2>
+            <p class="inicio__texto">Digite o nome, escolha a dosagem e a linha entra pronta na receita. Paciente e assinatura podem vir depois.</p>
+          </div>
+
           <!-- Ponto de escrita: onde o próximo medicamento entra na receita -->
           <div class="compor" id="compor">
             <div class="compor__campo">
@@ -90,6 +99,7 @@
                 <p class="rotulo">Meus modelos</p>
                 <ul class="modelos" id="modelos"></ul>
               </div>
+              <button type="button" class="mais" id="btnExemplo" hidden>Ver uma receita de exemplo</button>
             </div>
           </div>
 
@@ -104,6 +114,8 @@
         <footer class="folha__rodape" id="folhaRodape"></footer>
       </article>
 
+      <!-- O que o médico já construiu aqui: receitas feitas, tempo medido, padrões e modelos dele -->
+      <p class="acumulado" id="acumulado" hidden></p>
       <p class="aviso">Base de medicamentos em revisão clínica. Confira dose, intervalo e duração antes de assinar. Não inclui medicamentos de controle especial.</p>
     </section>
 
@@ -124,7 +136,7 @@
   <dialog class="dlg" id="dlgPerfil" aria-labelledby="dlgPerfilTitulo">
     <form method="dialog" id="formPerfil">
       <h2 id="dlgPerfilTitulo">Meus dados</h2>
-      <p class="dlg__sub">Aparecem no cabeçalho e na assinatura da receita. Ficam salvos só neste navegador.</p>
+      <p class="dlg__sub" id="dlgPerfilSub">Aparecem no cabeçalho e na assinatura da receita. Ficam salvos só neste navegador.</p>
       <div class="dlg__grid">
         <label class="cmp cmp--full"><span>Nome do médico</span><input name="nome" autocomplete="name" placeholder="Dr(a). Nome Sobrenome"></label>
         <label class="cmp"><span>CRM</span><input name="crm" inputmode="numeric" placeholder="000000"></label>
@@ -152,6 +164,16 @@
         <button class="btn btn--primario" value="salvar" type="submit">Salvar</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog class="dlg" id="dlgResumo" aria-labelledby="dlgResumoTitulo">
+    <h2 id="dlgResumoTitulo">Resumo de uso</h2>
+    <p class="dlg__sub">O que aconteceu neste aparelho. Nada de paciente entra aqui. Mande para quem cuida do sistema: é com isso que a base melhora.</p>
+    <div class="resumo" id="resumoCorpo"></div>
+    <div class="dlg__acoes">
+      <button class="btn" type="button" data-fechar>Fechar</button>
+      <button class="btn btn--primario" type="button" id="btnCopiarResumo">Copiar resumo</button>
+    </div>
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
