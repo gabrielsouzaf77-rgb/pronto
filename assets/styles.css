@@ -86,6 +86,21 @@ hr { border: 0; }
 /* A divisa só aparece quando há conteúdo passando por baixo. */
 .rolou .top { box-shadow: 0 1px 0 rgba(15, 28, 46, 0.08); }
 
+/* Faixa da demonstração: rola junto com a página, o topo continua fixo. */
+.demo-faixa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--azul-forte);
+  background: var(--azul-claro);
+  text-align: center;
+  text-wrap: balance;
+}
+.demo-faixa a { color: inherit; font-weight: 600; flex: none; }
+
 .brand { display: flex; align-items: center; gap: 0.625rem; }
 /* Logotipo no computador, símbolo no celular. */
 .brand__logo { display: block; height: 1.5rem; width: auto; }
@@ -200,6 +215,102 @@ hr { border: 0; }
 /* ------------------------------------------------------------------ */
 
 .work { width: min(100%, 50rem); margin: 0 auto; padding: 1.25rem 1.25rem 4rem; }
+
+/* ------------------------------------------------------------------ */
+/* Por diagnóstico: barra à esquerda da folha                          */
+/* ------------------------------------------------------------------ */
+
+.lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.125rem;
+  border-radius: 1.25rem;
+  background: var(--papel);
+  box-shadow: 0 0 0 0.5px rgba(15, 40, 80, 0.06), 0 1px 2px rgba(15, 40, 80, 0.04), 0 16px 44px -20px rgba(15, 60, 120, 0.16);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.lateral__cab { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.lateral__titulo { font-size: 1.0625rem; font-weight: 700; letter-spacing: -0.015em; }
+.lateral__fechar { display: grid; place-items: center; width: 2rem; height: 2rem; border: 0; border-radius: 0.5rem; background: none; color: var(--suave); }
+.lateral__fechar svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.lateral__fechar:hover { background: var(--campo); }
+.lateral__busca { display: flex; align-items: center; gap: 0.5rem; height: 2.625rem; padding: 0 0.75rem; border-radius: var(--raio); background: var(--campo); transition: background-color 0.15s, box-shadow 0.15s; }
+.lateral__busca:focus-within { background: var(--papel); box-shadow: 0 0 0 1px var(--azul), 0 0 0 4px var(--azul-claro); }
+.lateral__busca svg { flex: none; fill: none; stroke: var(--suave); stroke-width: 2; stroke-linecap: round; }
+.lateral__busca input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; background: none; font-size: 0.9375rem; }
+.lateral__busca input:focus { outline: 0; }
+.lateral__busca input::placeholder { color: var(--apagado); }
+.lateral__vazio { padding: 0.875rem; border-radius: var(--raio); background: var(--azul-claro); font-size: 0.8125rem; color: var(--azul-forte); text-wrap: pretty; }
+.lateral__nada { font-size: 0.8125rem; color: var(--suave); }
+.lateral__nota { margin-top: auto; padding-top: 0.75rem; border-top: 1px solid var(--linha); font-size: 0.75rem; color: var(--apagado); text-wrap: pretty; }
+.lateral .mais { align-self: flex-start; }
+
+.diags { display: flex; flex-direction: column; gap: 0.125rem; }
+.diag { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-radius: 0.75rem; transition: background-color 0.15s; }
+.diag:hover { background: var(--campo); }
+.diag--atual, .diag--atual:hover { background: var(--azul-claro); }
+.diag__usar { display: grid; gap: 0.0625rem; min-width: 0; padding: 0.5625rem 0.25rem 0.5625rem 0.625rem; border: 0; background: none; text-align: left; transition: transform 0.25s var(--mola); }
+.diag__usar:active { transform: scale(0.98); transition-duration: 0.1s; }
+.diag__usar strong { font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.diag__usar span { font-size: 0.75rem; color: var(--suave); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.diag__usos { padding: 0.0625rem 0.4375rem; margin-right: 0.5rem; border-radius: 999px; background: rgba(15, 60, 120, 0.07); font-size: 0.75rem; font-weight: 600; color: var(--suave); }
+.diag__del { position: absolute; right: 0.25rem; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border: 0; border-radius: 0.5rem; background: var(--papel); color: var(--suave); opacity: 0; transition: opacity 0.15s; }
+.diag__del svg { width: 0.9375rem; height: 0.9375rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.diag:hover .diag__del, .diag__del:focus-visible { opacity: 1; }
+.diag__del:hover { background: var(--alerta-fundo); color: var(--alerta); }
+@media (hover: none) { .diag__del { position: static; transform: none; opacity: 1; background: none; margin-right: 0.25rem; } .diag { grid-template-columns: minmax(0, 1fr) auto auto; } }
+
+/* Botão que abre a barra em telas menores */
+.abre-lateral {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  margin: 0 0.25rem 0.75rem;
+  padding: 0.375rem 0.75rem 0.375rem 0.5625rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 60, 120, 0.07);
+  font-size: 0.875rem;
+  font-weight: 550;
+  color: var(--tinta);
+}
+.abre-lateral:hover { background: rgba(15, 60, 120, 0.12); }
+.abre-lateral svg { flex: none; fill: none; stroke: var(--azul); stroke-width: 2; stroke-linecap: round; }
+.abre-lateral__n { padding: 0 0.375rem; border-radius: 999px; background: var(--azul); color: #fff; font-size: 0.75rem; font-weight: 600; }
+.abre-lateral__n:empty { display: none; }
+
+.veu-lateral { display: none; }
+
+/* Tela larga: a barra fica fixa à esquerda da folha. */
+@media (min-width: 64rem) {
+  main { display: grid; grid-template-columns: 16.5rem minmax(0, 50rem); justify-content: center; align-items: start; column-gap: 1.75rem; padding-inline: 1.25rem; }
+  main > .work { width: 100%; margin: 0; padding-inline: 0; }
+  .lateral { position: sticky; top: calc(var(--topo) + 1.25rem + env(safe-area-inset-top, 0px)); max-height: calc(100dvh - var(--topo) - 2.5rem); margin-top: 1.25rem; }
+  .abre-lateral, .lateral__fechar { display: none; }
+}
+
+/* Tela menor: a barra entra pela esquerda, por cima, e sai pelo mesmo caminho. */
+@media (max-width: 63.99rem) {
+  .lateral {
+    position: fixed;
+    z-index: 50;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(20rem, 86vw);
+    padding-top: calc(1.125rem + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(1.125rem + env(safe-area-inset-bottom, 0px));
+    border-radius: 0 1.25rem 1.25rem 0;
+    transform: translateX(-104%);
+    visibility: hidden;
+    transition: transform 0.4s var(--mola), visibility 0s 0.4s;
+  }
+  .lateral-aberta .lateral { transform: none; visibility: visible; transition-delay: 0s; }
+  .veu-lateral { display: block; position: fixed; inset: 0; z-index: 45; background: rgba(15, 40, 80, 0.28); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .lateral-aberta .veu-lateral { opacity: 1; pointer-events: auto; }
+}
 
 /* Onde o médico está atendendo: o local escolhido define timbre e prontuário. */
 .local-atual {
@@ -538,6 +649,40 @@ input.rx__qtd { height: 1.75rem; padding: 0 0.375rem; margin-right: -0.375rem; f
   overflow: hidden;
 }
 .sec__texto::placeholder { color: var(--apagado); }
+
+/* Copiar o prontuário inteiro: grande e sempre à vista enquanto o médico rola as seções. */
+.copiar-tudo {
+  position: sticky;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 5;
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  margin: 0 -0.75rem -0.75rem;
+  padding: 0.75rem;
+  border-radius: 1.125rem;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  box-shadow: 0 0 0 0.5px rgba(15, 40, 80, 0.08), 0 12px 30px -14px rgba(15, 60, 120, 0.35);
+}
+.copiar-tudo__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  height: 3.25rem;
+  border-radius: 0.875rem;
+  font-size: 1.0625rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.copiar-tudo__btn svg { flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+.copiar-tudo__btn--ok, .copiar-tudo__btn--ok:hover { background: #12805c; }
+/* No prontuário, o aviso sobe para não cobrir o botão grande. */
+body[data-tab='prontuario'] .toast { bottom: calc(9.25rem + env(safe-area-inset-bottom, 0px)); }
+.copiar-tudo__ajuda { font-size: 0.8125rem; color: var(--suave); text-align: center; text-wrap: balance; }
 .sec .chips { flex-direction: column; gap: 0.5rem; }
 .sec .chips:empty { display: none; }
 .sec__grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; }
@@ -740,6 +885,10 @@ input.rx__qtd { height: 1.75rem; padding: 0 0.375rem; margin-right: -0.375rem; f
   }
   .acoes .btn { flex: 1; height: 2.875rem; border-radius: 0.8125rem; font-size: 0.9375rem; }
   .toast { bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px)); }
+  /* No prontuário, o botão grande da folha já faz o papel da barra de baixo: uma só, para não empilhar duas. */
+  body[data-tab='prontuario'] .acoes { display: none; }
+  body[data-tab='prontuario'] .toast { bottom: calc(10.5rem + env(safe-area-inset-bottom, 0px)); }
+  .copiar-tudo { bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)); }
 
   .work { padding: 0.75rem 1rem 7rem; }
   .folha { min-height: 0; padding: 1.5rem 1.125rem 1.375rem; border-radius: 1.25rem; }

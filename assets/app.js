@@ -13,10 +13,15 @@
   const paraRegex = (t) => t.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&');
   const comMouse = () => window.matchMedia('(pointer: fine)').matches;
 
+  // Demonstração (assets/demo.js, só com ?demo): os dados ficam na memória da aba e o
+  // armazenamento do navegador não é lido nem gravado.
+  const DEMO = window.RX_DEMO || null;
+
   // Só perfil, padrões, modelos e contagem de uso ficam no navegador.
   // Paciente e receita em andamento vivem apenas na memória da aba.
   const guarda = {
     ler(chave, padrao) {
+      if (DEMO) return chave in DEMO.dados ? JSON.parse(JSON.stringify(DEMO.dados[chave])) : padrao;
       try {
         const v = localStorage.getItem('rx.' + chave);
         return v ? JSON.parse(v) : padrao;
@@ -25,6 +30,10 @@
       }
     },
     gravar(chave, valor) {
+      if (DEMO) {
+        DEMO.dados[chave] = valor;
+        return true;
+      }
       try {
         localStorage.setItem('rx.' + chave, JSON.stringify(valor));
         return true;
@@ -58,6 +67,10 @@
     pront: { queixa: 'geral', sec: {} },
     locais: guarda.ler('locais', []),
     localAtual: guarda.ler('localAtual', ''),
+    diagnosticos: guarda.ler('diagnosticos', []),
+    diagnostico: '', // escrito na barra "Por diagnóstico" para este atendimento
+    diagnosticoContado: '', // diagnóstico em que este atendimento já contou um uso
+    hdAutomatico: '', // o que a barra escreveu sozinha na hipótese do prontuário
   };
   let seq = 0;
 
@@ -621,7 +634,9 @@
     guarda.gravar('metricas', m);
     renderAcumulado();
     renderPerfil();
-    return m.receitas === 1 ? `Sua primeira receita ficou pronta em ${duracao(seg)}.` : `Receita pronta em ${duracao(seg)}.`;
+    const frase = m.receitas === 1 ? `Sua primeira receita ficou pronta em ${duracao(seg)}.` : `Receita pronta em ${duracao(seg)}.`;
+    const guardada = aprenderDiagnostico();
+    return guardada ? `${frase} ${guardada}` : frase;
   }
 
   // forcar: imprime mesmo sem nome e CRM (o médico decidiu assim, ou acabou de sair do preenchimento).
@@ -1400,6 +1415,190 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* Por diagnóstico: os atendimentos do próprio médico, prontos de novo */
+  /* ------------------------------------------------------------------ */
+
+  // Cada diagnóstico guarda a última receita e o último prontuário que o médico fez para ele.
+  // O Pronto não cria nem sugere tratamento: a barra só devolve o que o próprio médico escreveu.
+  const chaveDiag = (t) => norm(t).replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+
+  function secaoHD() {
+    return secoesAtivas().find((s) => s.base === 'hd');
+  }
+
+  // O diagnóstico do atendimento: o que o médico escreveu na barra ou, se não escreveu, a hipótese do prontuário.
+  function diagnosticoAtual() {
+    if (estado.diagnostico.trim()) return estado.diagnostico.trim();
+    const hd = secaoHD();
+    const texto = hd ? (estado.pront.sec[hd.id] || '').trim() : '';
+    const primeiro = texto.split(/[.;\n]/)[0].trim().slice(0, 60);
+    return primeiro ? maiuscula(primeiro) : '';
+  }
+
+  // Guarda o atendimento no diagnóstico dele. Chamado ao finalizar a receita, ao copiar o prontuário
+  // inteiro ou pelo botão da barra. Conta um uso só uma vez por atendimento.
+  function aprenderDiagnostico(manual) {
+    const nome = diagnosticoAtual();
+    if (!nome || (!estado.itens.length && !Object.values(estado.pront.sec).some((v) => v && v.trim()))) return '';
+    if (estado.exemplo) return '';
+    const chave = chaveDiag(nome);
+    const lista = estado.diagnosticos;
+    let d = lista.find((x) => x.chave === chave);
+    if (!d) {
+      d = { id: 'd' + Date.now().toString(36), nome, chave, usos: 0 };
+      lista.push(d);
+    }
+    d.itens = estado.itens.map((it) => ({ apId: it.apId, texto: it.texto, qtd: it.qtd }));
+    d.orientacoes = estado.orientacoes.trim();
+    d.pront = { queixa: estado.pront.queixa, sec: { ...estado.pront.sec } };
+    d.atualizado = Date.now();
+    if (estado.diagnosticoContado !== chave) {
+      d.usos += 1;
+      estado.diagnosticoContado = chave;
+    }
+    guarda.gravar('diagnosticos', lista);
+    renderDiagnosticos();
+    return manual ? `${nome} atualizado com este atendimento.` : `Guardada em ${nome}.`;
+  }
+
+  function resumoDosItens(d) {
+    const nomes = (d.itens || []).filter((i) => POR_AP.has(i.apId)).map((i) => {
+      const { med, ap } = POR_AP.get(i.apId);
+      return `${med.nome} ${ap.conc}`;
+    });
+    if (!nomes.length) return 'Só prontuário';
+    return nomes.length > 2 ? `${nomes.slice(0, 2).join(' · ')} +${nomes.length - 2}` : nomes.join(' · ');
+  }
+
+  function renderDiagnosticos() {
+    const busca = chaveDiag($('#diagBusca').value);
+    const lista = estado.diagnosticos
+      .filter((d) => !busca || d.chave.includes(busca))
+      .sort((a, b) => b.usos - a.usos || b.atualizado - a.atualizado);
+    const atual = chaveDiag(diagnosticoAtual());
+    $('#diagLista').innerHTML = lista.map((d) => `
+      <li class="diag${d.chave === atual ? ' diag--atual' : ''}">
+        <button type="button" class="diag__usar" data-diag="${esc(d.id)}">
+          <strong>${esc(d.nome)}</strong>
+          <span>${esc(resumoDosItens(d))}</span>
+        </button>
+        <span class="diag__usos" title="Atendimentos guardados">${d.usos}×</span>
+        <button type="button" class="diag__del" data-excluir-diag="${esc(d.id)}" aria-label="Excluir ${esc(d.nome)}">${ICONE.remover}</button>
+      </li>`).join('');
+    const vazio = !estado.diagnosticos.length;
+    $('#diagVazio').hidden = !vazio;
+    $('#diagNada').hidden = vazio || lista.length > 0;
+    $('#diagNada').textContent = busca ? `Nenhum atendimento guardado com “${$('#diagBusca').value.trim()}”. Finalize este e ele fica guardado.` : '';
+    $('#btnGuardarDiag').hidden = !$('#diagBusca').value.trim() && !atual;
+    $$('.abre-lateral__n').forEach((el) => { el.textContent = estado.diagnosticos.length || ''; });
+  }
+
+  function aplicarDiagnostico(id) {
+    const d = estado.diagnosticos.find((x) => x.id === id);
+    if (!d) return;
+    const antes = {
+      itens: estado.itens, orientacoes: estado.orientacoes, sec: { ...estado.pront.sec }, queixa: estado.pront.queixa,
+      diagnostico: estado.diagnostico, inicio: estado.inicio, concluida: estado.concluida, contado: estado.diagnosticoContado,
+    };
+    estado.itens = (d.itens || []).filter((i) => POR_AP.has(i.apId)).map((i) => ({ uid: ++seq, apId: i.apId, texto: i.texto, qtd: i.qtd, qtdTocada: false }));
+    estado.orientacoes = d.orientacoes || '';
+    estado.pront.sec = { ...((d.pront && d.pront.sec) || {}) };
+    if (d.pront && d.pront.queixa) estado.pront.queixa = d.pront.queixa;
+    estado.diagnostico = d.nome;
+    estado.exemplo = false;
+    estado.concluida = false;
+    estado.diagnosticoContado = '';
+    estado.inicio = Date.now();
+    $('#diagBusca').value = d.nome;
+    preencherCampos();
+    voltarParaNome('');
+    renderItens();
+    renderQueixas();
+    renderSecoes();
+    renderDiagnosticos();
+    fecharLateral();
+    avisar(`${d.nome}: receita e prontuário prontos para ajustar.`, 'Desfazer', () => {
+      estado.itens = antes.itens;
+      estado.orientacoes = antes.orientacoes;
+      estado.pront.sec = antes.sec;
+      estado.pront.queixa = antes.queixa;
+      estado.diagnostico = antes.diagnostico;
+      estado.inicio = antes.inicio;
+      estado.concluida = antes.concluida;
+      estado.diagnosticoContado = antes.contado;
+      $('#diagBusca').value = antes.diagnostico;
+      preencherCampos();
+      renderItens();
+      renderQueixas();
+      renderSecoes();
+      renderDiagnosticos();
+    });
+  }
+
+  function excluirDiagnostico(id) {
+    const i = estado.diagnosticos.findIndex((x) => x.id === id);
+    if (i < 0) return;
+    const [removido] = estado.diagnosticos.splice(i, 1);
+    guarda.gravar('diagnosticos', estado.diagnosticos);
+    renderDiagnosticos();
+    avisar(`${removido.nome} excluído.`, 'Desfazer', () => {
+      estado.diagnosticos.splice(i, 0, removido);
+      guarda.gravar('diagnosticos', estado.diagnosticos);
+      renderDiagnosticos();
+    });
+  }
+
+  // O diagnóstico escrito na barra também vai para a hipótese do prontuário, enquanto o médico não a mudar.
+  function aoDigitarDiagnostico(ev) {
+    const valor = ev.target.value;
+    estado.diagnostico = valor;
+    const hd = secaoHD();
+    if (hd) {
+      const atual = (estado.pront.sec[hd.id] || '').trim();
+      if (!atual || atual === estado.hdAutomatico) {
+        estado.pront.sec[hd.id] = valor.trim();
+        estado.hdAutomatico = valor.trim();
+        const area = $(`.sec[data-sec="${hd.id}"] .sec__texto`);
+        if (area) { area.value = valor.trim(); ajustarAltura(area); marcarFichas(area.closest('.sec')); }
+      }
+    }
+    renderDiagnosticos();
+  }
+
+  function abrirLateral() {
+    document.body.classList.add('lateral-aberta');
+    $('#diagBusca').focus({ preventScroll: true });
+  }
+
+  function fecharLateral() {
+    document.body.classList.remove('lateral-aberta');
+  }
+
+  function ligarDiagnosticos() {
+    $('#diagBusca').addEventListener('input', aoDigitarDiagnostico);
+    $('#diagBusca').addEventListener('keydown', (ev) => {
+      if (ev.key !== 'Enter') return;
+      ev.preventDefault();
+      const primeiro = $('#diagLista [data-diag]');
+      if (primeiro) aplicarDiagnostico(primeiro.dataset.diag);
+    });
+    $('#diagLista').addEventListener('click', (ev) => {
+      const del = ev.target.closest('[data-excluir-diag]');
+      if (del) return excluirDiagnostico(del.dataset.excluirDiag);
+      const usar = ev.target.closest('[data-diag]');
+      if (usar) aplicarDiagnostico(usar.dataset.diag);
+    });
+    $('#btnGuardarDiag').addEventListener('click', () => {
+      const msg = aprenderDiagnostico(true);
+      avisar(msg || 'Escreva o diagnóstico e monte a receita ou o prontuário antes de guardar.');
+    });
+    $$('[data-abrir-lateral]').forEach((b) => b.addEventListener('click', abrirLateral));
+    $('#fecharLateral').addEventListener('click', fecharLateral);
+    $('#veuLateral').addEventListener('click', fecharLateral);
+    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') fecharLateral(); });
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Perfil, avisos e área de transferência                              */
   /* ------------------------------------------------------------------ */
 
@@ -1515,8 +1714,14 @@
   function novaReceita() {
     const vazia = !estado.itens.length && !estado.orientacoes.trim() && !Object.values(estado.paciente).some((v) => v.trim());
     if (vazia) return $('#busca').focus();
-    const antes = { itens: estado.itens, paciente: { ...estado.paciente }, orientacoes: estado.orientacoes };
+    const antes = { itens: estado.itens, paciente: { ...estado.paciente }, orientacoes: estado.orientacoes, diagnostico: estado.diagnostico };
     const relogio = { inicio: estado.inicio, concluida: estado.concluida };
+    // Atendimento novo: o diagnóstico da barra também recomeça.
+    estado.diagnostico = '';
+    estado.diagnosticoContado = '';
+    estado.hdAutomatico = '';
+    $('#diagBusca').value = '';
+    renderDiagnosticos();
     estado.itens = [];
     estado.paciente = { nome: '', idade: '', sexo: '', endereco: '' };
     estado.orientacoes = '';
@@ -1532,6 +1737,9 @@
       estado.orientacoes = antes.orientacoes;
       estado.inicio = relogio.inicio;
       estado.concluida = relogio.concluida;
+      estado.diagnostico = antes.diagnostico;
+      $('#diagBusca').value = antes.diagnostico;
+      renderDiagnosticos();
       preencherCampos();
       renderItens();
       renderResultados();
@@ -1574,7 +1782,7 @@
     $('#btnSalvarModelo').hidden = !naReceita;
     $('#btnLimpar').hidden = !naReceita;
     $('#btnLimparPront').hidden = naReceita;
-    $('#btnCopiar').textContent = naReceita ? 'Copiar' : 'Copiar tudo';
+    $('#btnCopiar').textContent = naReceita ? 'Copiar' : 'Copiar prontuário';
     // Campos escondidos medem altura zero; ao aparecer, voltam ao tamanho do texto.
     $$(naReceita ? '#tab-prescricao textarea' : '#secoes .sec__texto').forEach(ajustarAltura);
     window.scrollTo({ top: 0 });
@@ -1695,13 +1903,27 @@
       $('#dlgResumo').close('copiar');
       copiar(textoDoResumo(), 'Resumo copiado. É só colar na conversa e enviar.');
     });
+    // O prontuário inteiro, com o nome de cada campo. O botão grande da folha confirma no próprio texto.
+    function copiarProntuario(botao) {
+      const texto = textoDoProntuario();
+      if (!texto) return avisar('O prontuário está vazio.');
+      const guardado = aprenderDiagnostico();
+      copiar(texto, `Prontuário copiado. É só colar no sistema da unidade.${guardado ? ' ' + guardado : ''}`);
+      if (botao) {
+        botao.classList.add('copiar-tudo__btn--ok');
+        $('span', botao).textContent = 'Prontuário copiado';
+        clearTimeout(botao.temporizador);
+        botao.temporizador = setTimeout(() => {
+          botao.classList.remove('copiar-tudo__btn--ok');
+          $('span', botao).textContent = 'Copiar prontuário inteiro';
+        }, 2200);
+      }
+    }
+    $('#btnCopiarProntTudo').addEventListener('click', (ev) => copiarProntuario(ev.currentTarget));
+
     // Copiar segue a área em que o médico está.
     $('#btnCopiar').addEventListener('click', () => {
-      if (document.body.dataset.tab === 'prontuario') {
-        const texto = textoDoProntuario();
-        if (!texto) return avisar('O prontuário está vazio.');
-        return copiar(texto, 'Prontuário copiado. É só colar no sistema da unidade.');
-      }
+      if (document.body.dataset.tab === 'prontuario') return copiarProntuario();
       if (!estado.itens.length) return avisar('Escolha um medicamento antes de copiar.');
       const tempo = concluir();
       copiar(textoDaReceita(), tempo ? `${tempo} Copiada: é só colar no sistema da unidade.` : 'Prescrição copiada. É só colar no sistema da unidade.');
@@ -1760,8 +1982,19 @@
     window.addEventListener('resize', () => $$('.rx__uso, .rx__orienta, .sec__texto').forEach(ajustarAltura));
   }
 
+  if (DEMO) {
+    document.body.classList.add('em-demo');
+    document.body.insertAdjacentHTML('afterbegin', `
+      <div class="demo-faixa" role="note">
+        <span><strong>Demonstração</strong> · 7º dia de uso de uma plantonista fictícia. Nada do que você fizer aqui fica salvo.</span>
+        <a href="${esc(location.pathname)}">Sair</a>
+      </div>`);
+  }
+
   ligar();
   ligarLocais();
+  ligarDiagnosticos();
+  renderDiagnosticos();
   renderLocalAtual();
   renderPerfil();
   renderModelos();

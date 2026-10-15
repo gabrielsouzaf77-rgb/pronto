@@ -30,7 +30,11 @@ publicar, basta subir a pasta em qualquer hospedagem de site estático.
 - **Meu padrão:** o médico salva a posologia que prefere para uma apresentação.
 - **Meus modelos:** receitas inteiras salvas para repetir com um clique.
 - **Prontuário:** frases clicáveis por queixa, exame físico e conduta, com o
-  resumo da prescrição atual. Sai em texto para copiar.
+  resumo da prescrição atual. Sai em texto para copiar: cada seção tem seu
+  "Copiar" (o sistema da UPA tem um campo para cada uma) e o botão grande
+  "Copiar prontuário inteiro" fica fixo no pé da folha. Ele ganhou esse
+  destaque porque um médico de teste pediu um "copiar tudo" que já existia
+  no topo e ele não tinha visto.
 
 ## Marca
 
@@ -49,6 +53,27 @@ translúcido, resposta visual no toque, transições em mola sem ressalto que
 saem pelo mesmo caminho por onde entraram, e ações secundárias um nível abaixo
 (menu "⋯" e opções do item). Respeita as preferências de menos movimento,
 menos transparência e mais contraste.
+
+## Por diagnóstico
+
+Barra à esquerda da folha (no celular, abre pelo botão "Por diagnóstico"). O
+médico escreve o diagnóstico do atendimento e, ao finalizar a receita
+(imprimir ou copiar) ou copiar o prontuário inteiro, o atendimento fica
+guardado com aquele nome: receita, orientações e prontuário. Na próxima vez,
+um clique devolve tudo preenchido para ajustar, com "Desfazer".
+
+- Se ele não escrever na barra, vale a primeira frase da hipótese
+  diagnóstica do prontuário.
+- O diagnóstico escrito na barra também entra na hipótese do prontuário,
+  enquanto ele não a mudar à mão.
+- Cada diagnóstico guarda a última versão e conta quantas vezes foi usado; a
+  lista vem ordenada pelos mais usados.
+- Fica só no navegador (`rx.diagnosticos`), sem os dados do paciente
+  (nome, idade, sexo, endereço).
+
+O Pronto não sugere tratamento: a barra só devolve o que o próprio médico
+escreveu, como um caderno dele. Isso mantém o produto como facilitador de
+redação (ver a decisão sobre a Anvisa abaixo).
 
 ## Locais de atendimento
 
@@ -145,6 +170,12 @@ celular e no computador, e a impressão funciona. Para atualizar o site, rodar
 quem já abriu o site pode ver a página nova com o estilo antigo), fazer commit
 e `git push`; o GitHub republica em cerca de um minuto. A página
 pede aos buscadores que não a indexem.
+
+**Demonstração:** https://gabrielsouzaf77-rgb.github.io/pronto/?demo abre o
+Pronto no 7º dia de uso de uma plantonista fictícia (`assets/demo.js`): duas
+unidades, 61 receitas e 9 diagnósticos guardados. Nesse modo o app não lê nem
+grava o armazenamento do navegador, então os dados reais de quem abrir não são
+tocados e nada fica salvo. O endereço sem `?demo` continua limpo.
 
 ## Link de teste no Claude
 
