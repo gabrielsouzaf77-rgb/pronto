@@ -4,8 +4,8 @@ Facilitador de redação de prescrição e prontuário para plantão. O médico 
 o medicamento e a apresentação; a linha da receita entra com via, intervalo e
 duração usuais, e ele ajusta o que quiser antes de imprimir ou copiar.
 
-O nome antigo era "Rx Plantão"; o repositório e o endereço do site
-mantêm esse nome para não quebrar o link já enviado. A marca está em `marca/`.
+O nome antigo era "Rx Plantão". A marca está em `marca/`. A pasta local ainda se
+chama `rx-plantao`; o repositório e o site já se chamam `pronto`.
 
 ## Como abrir
 
@@ -104,10 +104,12 @@ escassez ou hábito forçado: não cabem numa ferramenta médica.
 
 ## Site de teste
 
-https://gabrielsouzaf77-rgb.github.io/rx-plantao/
+https://gabrielsouzaf77-rgb.github.io/pronto/
 
 Hospedado no GitHub Pages a partir da branch `main` deste repositório
-(github.com/gabrielsouzaf77-rgb/rx-plantao, público). Abre sem login no
+(github.com/gabrielsouzaf77-rgb/pronto, público). O endereço antigo
+(`/rx-plantao/`) é outro repositório, de mesmo nome, que só redireciona para
+este, para não quebrar os links já enviados. Abre sem login no
 celular e no computador, e a impressão funciona. Para atualizar o site, basta
 fazer commit e `git push`; o GitHub republica em cerca de um minuto. A página
 pede aos buscadores que não a indexem.
