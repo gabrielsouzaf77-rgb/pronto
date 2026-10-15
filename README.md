@@ -140,8 +140,10 @@ Hospedado no GitHub Pages a partir da branch `main` deste repositório
 (github.com/gabrielsouzaf77-rgb/pronto, público). O endereço antigo
 (`/rx-plantao/`) é outro repositório, de mesmo nome, que só redireciona para
 este, para não quebrar os links já enviados. Abre sem login no
-celular e no computador, e a impressão funciona. Para atualizar o site, basta
-fazer commit e `git push`; o GitHub republica em cerca de um minuto. A página
+celular e no computador, e a impressão funciona. Para atualizar o site, rodar
+`python ferramentas/versionar.py` (marca uma versão nova no CSS e no JS, senão
+quem já abriu o site pode ver a página nova com o estilo antigo), fazer commit
+e `git push`; o GitHub republica em cerca de um minuto. A página
 pede aos buscadores que não a indexem.
 
 ## Link de teste no Claude
