@@ -11,7 +11,7 @@
   <link rel="icon" href="marca/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="marca/favicon-32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="marca/apple-touch-icon.png">
-  <link rel="stylesheet" href="assets/styles.css?v=202610151827">
+  <link rel="stylesheet" href="assets/styles.css?v=202610151936">
 </head>
 <body class="entrando" data-tab="prescricao">
 
@@ -43,6 +43,9 @@
           <button type="button" role="menuitem" id="btnLocais">Locais de atendimento</button>
           <button type="button" role="menuitem" id="btnResumo">Resumo de uso</button>
           <button type="button" role="menuitem" id="btnPerfil"><span id="perfilResumo">Meus dados</span></button>
+          <hr>
+          <button type="button" role="menuitem" id="btnLevar">Levar para outro aparelho</button>
+          <button type="button" role="menuitem" id="btnSair">Sair deste computador</button>
         </div>
       </div>
     </div>
@@ -214,6 +217,45 @@
     </form>
   </dialog>
 
+  <dialog class="dlg" id="dlgLevar" aria-labelledby="dlgLevarTitulo">
+    <h2 id="dlgLevarTitulo">Levar para outro aparelho</h2>
+    <p class="dlg__sub">Seus dados ficam só neste navegador. Para usar o Pronto em outro computador ou celular, exporte aqui e importe lá.</p>
+
+    <section class="bloco-local">
+      <h3 class="bloco-local__titulo">Exportar</h3>
+      <p class="bloco-local__ajuda">Baixa um arquivo com seu nome e CRM, unidades (com timbre), modelos, padrões e atendimentos por diagnóstico. Nenhum dado de paciente vai junto.</p>
+      <p class="bloco-local__ajuda" id="levarResumo"></p>
+      <div class="bloco-local__acoes"><button class="btn btn--primario" type="button" id="btnExportar">Exportar arquivo</button></div>
+      <p class="bloco-local__aviso">Num computador compartilhado, apague o arquivo de Downloads depois de mandar para você mesmo.</p>
+    </section>
+
+    <section class="bloco-local">
+      <h3 class="bloco-local__titulo">Importar</h3>
+      <p class="bloco-local__ajuda">Junta o arquivo com o que já está aqui. Quando os dois têm o mesmo diagnóstico, unidade ou modelo, fica a versão mais recente.</p>
+      <label class="envio envio--compacto">
+        <input type="file" id="importarArquivo" accept=".json,application/json">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5V4.5M7.5 9 12 4.5 16.5 9M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>
+        <strong>Escolher arquivo do Pronto</strong>
+        <span>pronto-meus-dados-….json</span>
+      </label>
+    </section>
+
+    <div class="dlg__acoes">
+      <button class="btn" type="button" data-fechar>Fechar</button>
+    </div>
+  </dialog>
+
+  <dialog class="dlg dlg--pequeno" id="dlgSair" aria-labelledby="dlgSairTitulo">
+    <h2 id="dlgSairTitulo">Sair deste computador</h2>
+    <p class="dlg__sub">Apaga deste navegador seu nome e CRM, unidades, modelos e atendimentos por diagnóstico. Use ao terminar o plantão num computador que outros médicos também usam.</p>
+    <p class="sair__resumo" id="sairResumo"></p>
+    <p class="sair__dica">Quer levar tudo com você? <button type="button" class="link" id="btnExportarAntes">Exporte antes</button>.</p>
+    <div class="dlg__acoes">
+      <button class="btn" type="button" data-fechar>Cancelar</button>
+      <button class="btn btn--apagar" type="button" id="btnConfirmarSair">Apagar e sair</button>
+    </div>
+  </dialog>
+
   <dialog class="dlg" id="dlgResumo" aria-labelledby="dlgResumoTitulo">
     <h2 id="dlgResumoTitulo">Resumo de uso</h2>
     <p class="dlg__sub">O que aconteceu neste aparelho. Nada de paciente entra aqui. Mande para quem cuida do sistema: é com isso que a base melhora.</p>
@@ -321,9 +363,9 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div id="impressao" aria-hidden="true"></div>
 
-  <script src="assets/dados-medicamentos.js?v=202610151827"></script>
-  <script src="assets/dados-prontuario.js?v=202610151827"></script>
-  <script src="assets/demo.js?v=202610151827"></script>
-  <script src="assets/app.js?v=202610151827"></script>
+  <script src="assets/dados-medicamentos.js?v=202610151936"></script>
+  <script src="assets/dados-prontuario.js?v=202610151936"></script>
+  <script src="assets/demo.js?v=202610151936"></script>
+  <script src="assets/app.js?v=202610151936"></script>
 </body>
 </html>

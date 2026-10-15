@@ -1982,6 +1982,134 @@
     window.addEventListener('resize', () => $$('.rx__uso, .rx__orienta, .sec__texto').forEach(ajustarAltura));
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Levar para outro aparelho e sair deste computador                   */
+  /* ------------------------------------------------------------------ */
+
+  // Tudo o que o Pronto guarda do médico. Paciente nunca entra aqui.
+  const CHAVES_DO_MEDICO = ['perfil', 'padroes', 'modelos', 'uso', 'metricas', 'locais', 'localAtual', 'diagnosticos'];
+  const AVISO_APOS_RECARREGAR = 'pronto.aviso';
+
+  const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+
+  function resumoGuardado() {
+    const partes = [];
+    if (estado.perfil.nome) partes.push(estado.perfil.nome);
+    partes.push(plural(estado.diagnosticos.length, 'diagnóstico', 'diagnósticos'));
+    partes.push(plural(estado.locais.length, 'unidade', 'unidades'));
+    partes.push(plural(estado.modelos.length, 'modelo', 'modelos'));
+    return partes.join(' · ');
+  }
+
+  function exportarDados() {
+    const dados = {};
+    CHAVES_DO_MEDICO.forEach((c) => {
+      const v = guarda.ler(c, undefined);
+      if (v !== undefined) dados[c] = v;
+    });
+    const pacote = { app: 'pronto', versao: 1, exportadoEm: new Date().toISOString(), dados };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(pacote)], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pronto-meus-dados-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    avisar('Arquivo baixado. No outro aparelho, abra o Pronto e use "Importar".');
+  }
+
+  // Junta duas listas pela chave; quando as duas têm o mesmo item, fica o mais recente.
+  function juntar(atual, novo, chave) {
+    const mapa = new Map((atual || []).map((x) => [x[chave], x]));
+    (Array.isArray(novo) ? novo : []).forEach((x) => {
+      if (!x || !x[chave]) return;
+      const ja = mapa.get(x[chave]);
+      if (!ja || (x.atualizado || 0) >= (ja.atualizado || 0)) mapa.set(x[chave], x);
+    });
+    return [...mapa.values()];
+  }
+
+  async function importarDados(arquivo) {
+    if (!arquivo) return;
+    let pacote;
+    try {
+      pacote = JSON.parse(await arquivo.text());
+    } catch (e) {
+      pacote = null;
+    }
+    if (!pacote || pacote.app !== 'pronto' || !pacote.dados || typeof pacote.dados !== 'object') {
+      return avisar('Esse arquivo não é um backup do Pronto.');
+    }
+    if (DEMO) return avisar('Na demonstração nada fica salvo. Importe no endereço sem ?demo.');
+    const d = pacote.dados;
+    const obj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+    const uso = { ...estado.uso };
+    Object.entries(obj(d.uso)).forEach(([k, n]) => { uso[k] = Math.max(uso[k] || 0, Number(n) || 0); });
+    const metricasNovas = obj(d.metricas);
+    const novo = {
+      perfil: { ...estado.perfil, ...obj(d.perfil) },
+      padroes: { ...estado.padroes, ...obj(d.padroes) },
+      modelos: juntar(estado.modelos, d.modelos, 'id'),
+      locais: juntar(estado.locais, d.locais, 'id'),
+      diagnosticos: juntar(estado.diagnosticos, d.diagnosticos, 'chave'),
+      uso,
+      metricas: (metricasNovas.receitas || 0) > estado.metricas.receitas ? { ...estado.metricas, ...metricasNovas } : estado.metricas,
+      localAtual: estado.localAtual || (typeof d.localAtual === 'string' ? d.localAtual : ''),
+    };
+    const gravou = Object.entries(novo).every(([k, v]) => guarda.gravar(k, v));
+    if (!gravou) return avisar('Este navegador não tem espaço para guardar tudo. Nada foi alterado de vez; tente outro navegador.');
+    Object.assign(estado, novo);
+    renderPerfil();
+    renderLocalAtual();
+    renderModelos();
+    renderDiagnosticos();
+    renderSecoes();
+    atualizarFolha();
+    $('#dlgLevar').close();
+    avisar(`Importado: ${resumoGuardado()}.`);
+  }
+
+  function abrirLevar() {
+    $('#levarResumo').textContent = `Neste navegador agora: ${resumoGuardado()}.`;
+    $('#importarArquivo').value = '';
+    abrirDialogo('#dlgLevar');
+  }
+
+  function abrirSair() {
+    $('#sairResumo').textContent = `Neste navegador: ${resumoGuardado()}.`;
+    abrirDialogo('#dlgSair');
+  }
+
+  // Apaga tudo do Pronto neste navegador e recomeça a página: some também o paciente que estiver na tela.
+  function sairDoComputador() {
+    if (DEMO) {
+      location.href = location.pathname;
+      return;
+    }
+    try {
+      Object.keys(localStorage).filter((k) => k.startsWith('rx.')).forEach((k) => localStorage.removeItem(k));
+      sessionStorage.setItem(AVISO_APOS_RECARREGAR, 'Seus dados foram apagados deste computador.');
+    } catch (e) { /* sem armazenamento: não havia nada salvo */ }
+    location.reload();
+  }
+
+  function ligarDados() {
+    $('#btnLevar').addEventListener('click', abrirLevar);
+    $('#btnSair').addEventListener('click', abrirSair);
+    $('#btnExportar').addEventListener('click', exportarDados);
+    $('#btnExportarAntes').addEventListener('click', exportarDados);
+    $('#importarArquivo').addEventListener('change', (ev) => importarDados(ev.target.files[0]));
+    $('#btnConfirmarSair').addEventListener('click', sairDoComputador);
+    try {
+      const aviso = sessionStorage.getItem(AVISO_APOS_RECARREGAR);
+      if (aviso) {
+        sessionStorage.removeItem(AVISO_APOS_RECARREGAR);
+        setTimeout(() => avisar(aviso), 400);
+      }
+    } catch (e) { /* sem armazenamento de sessão */ }
+  }
+
   if (DEMO) {
     document.body.classList.add('em-demo');
     document.body.insertAdjacentHTML('afterbegin', `
@@ -1994,6 +2122,7 @@
   ligar();
   ligarLocais();
   ligarDiagnosticos();
+  ligarDados();
   renderDiagnosticos();
   renderLocalAtual();
   renderPerfil();

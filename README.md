@@ -105,6 +105,25 @@ O local escolhido fica guardado e volta na próxima abertura. Modelos de
 receita salvos com um local ativo aparecem só nele. Tudo fica no navegador do
 médico (`rx.locais`, `rx.localAtual`); outro aparelho não vê esses dados.
 
+## Levar para outro aparelho e sair do computador
+
+Enquanto não há contas, tudo do médico fica só no navegador em que ele usou.
+Duas opções no menu "⋯" cobrem isso:
+
+- **Levar para outro aparelho:** "Exportar arquivo" baixa
+  `pronto-meus-dados-AAAA-MM-DD.json` com perfil, unidades (com timbre),
+  modelos, padrões, contagem de uso e atendimentos por diagnóstico, nunca
+  paciente. "Importar" junta o arquivo com o que já existe: listas unidas
+  pelo id (diagnósticos pelo nome), e no conflito fica o mais recente.
+  Importar o mesmo arquivo duas vezes não duplica nada.
+- **Sair deste computador:** apaga todas as chaves `rx.` do navegador e
+  recarrega a página, o que também tira da tela o paciente em andamento.
+  Feito para o computador compartilhado da UPA, onde o próximo plantonista
+  veria os modelos e o CRM do anterior.
+
+Contas com login, para os dados aparecerem em qualquer aparelho, ficaram como
+passo final (decisão do Gabriel em 15/10/2026).
+
 ## Primeiro uso e medição
 
 Desenhado com a skill revenue-centric-design
