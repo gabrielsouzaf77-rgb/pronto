@@ -40,6 +40,7 @@
           <button type="button" role="menuitem" id="btnLimpar">Nova receita</button>
           <button type="button" role="menuitem" id="btnLimparPront" hidden>Limpar prontuário</button>
           <hr>
+          <button type="button" role="menuitem" id="btnLocais">Locais de atendimento</button>
           <button type="button" role="menuitem" id="btnResumo">Resumo de uso</button>
           <button type="button" role="menuitem" id="btnPerfil"><span id="perfilResumo">Meus dados</span></button>
         </div>
@@ -50,6 +51,11 @@
   <main>
     <!-- ===================== PRESCRIÇÃO: a própria receita é a tela ===================== -->
     <section class="work" id="tab-prescricao" role="tabpanel" aria-labelledby="tabbtn-prescricao">
+      <button type="button" class="local-atual" data-abrir-locais>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/></svg>
+        <span class="local-atual__nome">Escolher local de atendimento</span>
+        <span class="local-atual__trocar">Trocar</span>
+      </button>
       <ul class="pendencias" id="pendencias" aria-live="polite"></ul>
 
       <article class="folha" id="folha" aria-label="Receita">
@@ -124,6 +130,11 @@
 
     <!-- ===================== PRONTUÁRIO ===================== -->
     <section class="work" id="tab-prontuario" role="tabpanel" aria-labelledby="tabbtn-prontuario" hidden>
+      <button type="button" class="local-atual" data-abrir-locais>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/></svg>
+        <span class="local-atual__nome">Escolher local de atendimento</span>
+        <span class="local-atual__trocar">Trocar</span>
+      </button>
       <article class="folha folha--pront" aria-label="Prontuário">
         <div class="queixas">
           <span class="rotulo">Queixa</span>
@@ -145,10 +156,6 @@
         <label class="cmp"><span>CRM</span><input name="crm" inputmode="numeric" placeholder="000000"></label>
         <label class="cmp"><span>UF</span><input name="uf" maxlength="2" placeholder="SP"></label>
         <label class="cmp cmp--full"><span>Especialidade ou RQE (opcional)</span><input name="especialidade" placeholder="Clínica Médica · RQE 00000"></label>
-        <label class="cmp cmp--full"><span>Unidade</span><input name="unidade" placeholder="UPA 24h"></label>
-        <label class="cmp cmp--full"><span>Endereço da unidade</span><input name="endereco" placeholder="Rua, número, bairro"></label>
-        <label class="cmp"><span>Cidade</span><input name="cidade" placeholder="Cidade"></label>
-        <label class="cmp"><span>Telefone</span><input name="telefone" inputmode="tel" placeholder="(00) 0000-0000"></label>
       </div>
       <div class="dlg__acoes">
         <button class="btn" type="button" data-fechar>Cancelar</button>
@@ -177,6 +184,100 @@
       <button class="btn" type="button" data-fechar>Fechar</button>
       <button class="btn btn--primario" type="button" id="btnCopiarResumo">Copiar resumo</button>
     </div>
+  </dialog>
+
+  <dialog class="dlg" id="dlgLocais" aria-labelledby="dlgLocaisTitulo">
+    <h2 id="dlgLocaisTitulo">Locais de atendimento</h2>
+    <p class="dlg__sub">Cada unidade guarda o timbre da receita e o jeito de dividir o prontuário do sistema de lá. Escolha onde você está agora.</p>
+    <p class="locais__vazio" id="locaisVazio">Nenhum local ainda. Cadastre a unidade onde você dá plantão e, quando voltar a ela, o modelo já estará pronto.</p>
+    <ul class="locais" id="locaisLista"></ul>
+    <div class="dlg__acoes">
+      <button class="btn" type="button" data-fechar>Fechar</button>
+      <button class="btn btn--primario" type="button" id="btnNovoLocal">Novo local</button>
+    </div>
+  </dialog>
+
+  <dialog class="dlg dlg--grande" id="dlgLocal" aria-labelledby="dlgLocalTitulo">
+    <form method="dialog" id="formLocal" novalidate>
+      <h2 id="dlgLocalTitulo">Novo local</h2>
+      <p class="dlg__sub">Fica salvo neste navegador. Na próxima vez que você atender aqui, receita e prontuário já saem no formato da unidade.</p>
+
+      <fieldset class="bloco-local">
+        <legend>Unidade</legend>
+        <div class="dlg__grid">
+          <label class="cmp cmp--full"><span>Nome</span><input name="nome" placeholder="UPA 24h Centro" maxlength="80"></label>
+          <label class="cmp cmp--full"><span>Endereço</span><input name="endereco" placeholder="Rua, número, bairro" maxlength="120"></label>
+          <label class="cmp"><span>Cidade</span><input name="cidade" placeholder="Cidade" maxlength="60"></label>
+          <label class="cmp"><span>Telefone</span><input name="telefone" inputmode="tel" placeholder="(00) 0000-0000" maxlength="30"></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="bloco-local">
+        <legend>Modelo do hospital <small>opcional</small></legend>
+        <p class="bloco-local__ajuda">Envie o receituário ou o prontuário que a unidade usa: PDF, Word, foto ou print. O Pronto lê os campos do prontuário e pode usar o topo da página como timbre. A leitura acontece neste aparelho e o arquivo não é guardado; prefira um modelo em branco, sem dados de paciente.</p>
+        <label class="envio" id="envioModelo">
+          <input type="file" id="modeloArquivo" accept=".pdf,.docx,.txt,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5V4.5M7.5 9 12 4.5 16.5 9M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>
+          <strong>Enviar modelo do hospital</strong>
+          <span>PDF, Word, foto ou print · ou arraste o arquivo aqui</span>
+        </label>
+        <p class="bloco-local__status" id="modeloStatus" aria-live="polite"></p>
+        <div class="recorte" id="recorte" hidden>
+          <div class="recorte__pagina">
+            <img id="recorteImg" alt="Primeira página do modelo enviado">
+            <div class="recorte__sombra" id="recorteSombra"></div>
+          </div>
+          <div class="recorte__controles">
+            <label class="recorte__altura">
+              <span>Altura do timbre <em id="recorteValor"></em></span>
+              <input type="range" id="recorteAltura" min="5" max="60" step="1" value="16">
+            </label>
+            <button class="btn" type="button" id="btnUsarTimbre">Usar o topo como timbre</button>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="bloco-local">
+        <legend>Timbre da receita <small>opcional</small></legend>
+        <p class="bloco-local__ajuda">Um print ou foto só do topo do receituário oficial, com os logos da unidade. Ele sai no lugar do cabeçalho do Pronto.</p>
+        <div class="timbre" id="timbrePrevia"></div>
+        <div class="bloco-local__acoes">
+          <label class="btn btn--arquivo">Enviar imagem<input type="file" id="timbreArquivo" accept="image/*"></label>
+          <button class="btn btn--quieto" type="button" id="timbreRemover" hidden>Remover</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="bloco-local">
+        <legend>Prontuário do sistema da unidade</legend>
+        <p class="bloco-local__ajuda">Cole um prontuário de lá, preenchido ou em branco. O Pronto separa os campos com os mesmos nomes e na mesma ordem, e o "Copiar" de cada um encaixa no campo certo.</p>
+        <textarea class="amostra" id="prontAmostra" rows="5" placeholder="QUEIXA PRINCIPAL:&#10;HDA:&#10;ANTECEDENTES:&#10;EXAME FÍSICO:&#10;HIPÓTESE DIAGNÓSTICA:&#10;CONDUTA:"></textarea>
+        <div class="bloco-local__acoes">
+          <button class="btn" type="button" id="btnLerCampos">Ler campos</button>
+          <button class="btn btn--quieto" type="button" id="btnCamposPadrao">Voltar ao padrão do Pronto</button>
+        </div>
+        <p class="campos-local__cab" aria-hidden="true"><span>Nome no sistema da unidade</span><span>Frases do Pronto</span></p>
+        <ol class="campos-local" id="camposLocal"></ol>
+        <button class="mais" type="button" id="btnAddCampo">+ Campo</button>
+      </fieldset>
+
+      <fieldset class="bloco-local">
+        <legend>Reconhecer este local <small>opcional</small></legend>
+        <p class="bloco-local__ajuda" id="geoInfo"></p>
+        <div class="bloco-local__acoes">
+          <button class="btn" type="button" id="btnGeoLocal">Usar minha localização atual</button>
+          <button class="btn btn--quieto" type="button" id="btnGeoRemover" hidden>Esquecer localização</button>
+        </div>
+        <p class="bloco-local__status" id="geoStatus" aria-live="polite"></p>
+      </fieldset>
+
+      <div class="dlg__acoes dlg__acoes--separadas">
+        <button class="btn btn--perigo" type="button" id="btnExcluirLocal" hidden>Excluir local</button>
+        <span class="dlg__acoes-dir">
+          <button class="btn" type="button" data-fechar>Cancelar</button>
+          <button class="btn btn--primario" type="submit">Salvar local</button>
+        </span>
+      </div>
+    </form>
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

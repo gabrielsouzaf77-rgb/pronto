@@ -27,7 +27,10 @@
     gravar(chave, valor) {
       try {
         localStorage.setItem('rx.' + chave, JSON.stringify(valor));
-      } catch (e) { /* navegador sem armazenamento: segue sem salvar */ }
+        return true;
+      } catch (e) {
+        return false; // navegador sem armazenamento ou sem espaço: segue sem salvar
+      }
     },
   };
 
@@ -53,8 +56,21 @@
     inicio: 0, // quando a receita atual começou a ser escrita
     concluida: false, // a receita atual já foi impressa ou copiada
     pront: { queixa: 'geral', sec: {} },
+    locais: guarda.ler('locais', []),
+    localAtual: guarda.ler('localAtual', ''),
   };
   let seq = 0;
+
+  // Antes dos locais, os dados da unidade ficavam em "Meus dados": eles viram o primeiro local.
+  if (!estado.locais.length && estado.perfil.unidade) {
+    const pf = estado.perfil;
+    estado.locais = [{ id: 'l' + Date.now().toString(36), nome: pf.unidade, endereco: pf.endereco || '', cidade: pf.cidade || '', telefone: pf.telefone || '', timbre: '', campos: null, geo: null }];
+    estado.localAtual = estado.locais[0].id;
+    guarda.gravar('locais', estado.locais);
+    guarda.gravar('localAtual', estado.localAtual);
+    ['unidade', 'endereco', 'cidade', 'telefone'].forEach((c) => delete pf[c]);
+    guarda.gravar('perfil', pf);
+  }
 
   const duracao = (s) => (s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')} s`);
   const marcarInicio = () => { if (!estado.inicio) estado.inicio = Date.now(); };
@@ -168,7 +184,7 @@
     $('#atalhosTitulo').textContent = Object.keys(estado.uso).length ? 'Mais usados' : 'Comuns no plantão';
     $('#atalhos').innerHTML = atalhos().map((e) => `
       <li><button type="button" class="atalho" data-ap="${esc(e.ap.id)}">${esc(e.med.nome)} <span>${esc(e.ap.conc)}</span></button></li>`).join('');
-    $('#modelosBox').hidden = !estado.modelos.length;
+    $('#modelosBox').hidden = !modelosVisiveis().length;
     renderAcumulado();
   }
 
@@ -488,15 +504,22 @@
     $('#btnExemplo').hidden = !primeiroUso;
     renderAcumulado();
 
-    $('#folhaCab').innerHTML = `
-      <button type="button" class="folha__editar" data-abrir="perfil" title="Editar meus dados">
-        <p class="folha__unidade">${pf.unidade ? esc(pf.unidade) : (pedir ? '<span class="falta">Preencher dados da unidade</span>' : '<span class="folha__vago">Sua unidade</span>')}</p>
-        <p class="folha__local">${localDaUnidade(pf)}</p>
+    const un = unidade();
+    // Com o timbre oficial da unidade, a imagem ocupa o cabeçalho; sem ele, vai o nome e o endereço do local.
+    $('#folhaCab').classList.toggle('folha__cab--timbre', Boolean(un.timbre));
+    $('#folhaCab').innerHTML = un.timbre ? `
+      <button type="button" class="folha__editar folha__editar--timbre" data-abrir="local" title="Editar o local">
+        <img class="folha__timbre" src="${un.timbre}" alt="Timbre de ${esc(un.nome)}">
+      </button>
+      <p class="folha__tipo">Receituário</p>` : `
+      <button type="button" class="folha__editar" data-abrir="local" title="Editar o local">
+        <p class="folha__unidade">${un.nome ? esc(un.nome) : (pedir ? '<span class="falta">Escolher o local de atendimento</span>' : '<span class="folha__vago">Sua unidade</span>')}</p>
+        <p class="folha__local">${localDaUnidade(un)}</p>
       </button>
       <p class="folha__tipo">Receituário</p>`;
 
     $('#folhaRodape').innerHTML = `
-      <p class="folha__data">${pf.cidade ? esc(pf.cidade) + ', ' : ''}${dataPorExtenso()}</p>
+      <p class="folha__data">${un.cidade ? esc(un.cidade) + ', ' : ''}${dataPorExtenso()}</p>
       <div class="folha__assina">
         <span class="folha__traco"></span>
         <button type="button" class="folha__editar" data-abrir="perfil" title="Editar meus dados">
@@ -538,13 +561,15 @@
         <p class="rx__orienta">${esc(estado.orientacoes.trim())}</p>
       </section>` : '';
 
+    const un = unidade();
+    const tipo = `<p class="folha__tipo">Receituário${via ? ` · ${esc(via)}` : ''}</p>`;
     return `
-      <header class="folha__cab">
-        <div>
-          <p class="folha__unidade">${esc(pf.unidade || '')}</p>
-          <p class="folha__local">${localDaUnidade(pf)}</p>
-        </div>
-        <p class="folha__tipo">Receituário${via ? ` · ${esc(via)}` : ''}</p>
+      <header class="folha__cab${un.timbre ? ' folha__cab--timbre' : ''}">
+        ${un.timbre ? `<img class="folha__timbre" src="${un.timbre}" alt="">` : `<div>
+          <p class="folha__unidade">${esc(un.nome || '')}</p>
+          <p class="folha__local">${localDaUnidade(un)}</p>
+        </div>`}
+        ${tipo}
       </header>
       <dl class="pacp">
         <div><dt>Paciente</dt><dd>${esc(pac.nome)}</dd></div>
@@ -558,7 +583,7 @@
         ${temAntimicrobiano() ? '<p class="atb">Antimicrobiano · válida por 10 dias</p>' : ''}
       </div>
       <footer class="folha__rodape">
-        <p class="folha__data">${pf.cidade ? esc(pf.cidade) + ', ' : ''}${dataPorExtenso()}</p>
+        <p class="folha__data">${un.cidade ? esc(un.cidade) + ', ' : ''}${dataPorExtenso()}</p>
         <div class="folha__assina">
           <span class="folha__traco"></span>
           <p class="folha__medico">${esc(pf.nome || '')}</p>
@@ -619,8 +644,10 @@
   /* Modelos                                                             */
   /* ------------------------------------------------------------------ */
 
+  const modelosVisiveis = () => estado.modelos.filter((m) => !m.localId || m.localId === estado.localAtual);
+
   function renderModelos() {
-    $('#modelos').innerHTML = estado.modelos.map((m) => `
+    $('#modelos').innerHTML = modelosVisiveis().map((m) => `
       <li class="modelo">
         <button type="button" class="modelo__usar" data-modelo="${esc(m.id)}">${esc(m.nome)} <span>${m.itens.length} ${m.itens.length === 1 ? 'item' : 'itens'}</span></button>
         <button type="button" class="modelo__del" data-excluir="${esc(m.id)}" aria-label="Excluir modelo ${esc(m.nome)}">×</button>
@@ -664,6 +691,7 @@
       nome,
       itens: estado.itens.map((it) => ({ apId: it.apId, texto: it.texto, qtd: it.qtd })),
       orientacoes: estado.orientacoes.trim(),
+      localId: estado.localAtual || '',
     });
     guarda.gravar('modelos', estado.modelos);
     renderModelos();
@@ -722,9 +750,9 @@
 
   function renderSecoes() {
     fichas = [];
-    $('#secoes').innerHTML = PRONT.secoes.map((s) => {
+    $('#secoes').innerHTML = secoesAtivas().map((s) => {
       const valor = estado.pront.sec[s.id] || '';
-      const grupos = gruposDaSecao(s.id).map((g) => `
+      const grupos = (s.base ? gruposDaSecao(s.base) : []).map((g) => `
         <div class="sec__grupo">
           ${g.grupo ? `<span class="sec__rotulo">${esc(g.grupo)}</span>` : ''}
           ${g.chips.map((c) => {
@@ -740,7 +768,7 @@
             <button type="button" class="sec__copiar" data-copiar-sec aria-label="Copiar ${esc(s.titulo)}">Copiar</button>
           </div>
           <textarea class="sec__texto" rows="1" placeholder="${esc(s.dica)}" aria-label="${esc(s.titulo)}">${esc(valor)}</textarea>
-          <div class="chips">${grupos}${s.id === 'cd' ? '<div class="sec__grupo"><button type="button" class="chip chip--acao" data-inserir-rx>+ Inserir prescrição atual</button></div>' : ''}</div>
+          <div class="chips">${grupos}${s.base === 'cd' ? '<div class="sec__grupo"><button type="button" class="chip chip--acao" data-inserir-rx>+ Inserir prescrição atual</button></div>' : ''}</div>
         </section>`;
     }).join('');
     $$('#secoes .sec__texto').forEach(ajustarAltura);
@@ -772,7 +800,7 @@
     // Os sistemas das UPAs têm um campo para cada parte: aqui sai só o texto desta seção, sem o rótulo.
     if (ev.target.closest('[data-copiar-sec]')) {
       let texto = area.value.trim();
-      const titulo = PRONT.secoes.find((s) => s.id === sec.dataset.sec).titulo;
+      const titulo = secoesAtivas().find((s) => s.id === sec.dataset.sec).titulo;
       if (!texto) return avisar(`${titulo}: ainda está vazio.`);
       if (!/[.!?]$/.test(texto)) texto += '.';
       return copiar(texto, `${titulo} copiado. É só colar no campo do sistema.`);
@@ -800,7 +828,7 @@
   }
 
   function textoDoProntuario() {
-    return PRONT.secoes.map((s) => {
+    return secoesAtivas().map((s) => {
       let v = (estado.pront.sec[s.id] || '').trim();
       if (!v) return '';
       if (!/[.!?]$/.test(v)) v += '.';
@@ -809,10 +837,574 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* Locais de atendimento: o modelo de cada unidade onde o médico atende */
+  /* ------------------------------------------------------------------ */
+
+  // Cada local guarda o cabeçalho da receita (texto ou o timbre oficial em imagem) e a divisão do prontuário
+  // usada no sistema daquela unidade. Fica só neste navegador, como os padrões e modelos do médico.
+  const CAMPOS_PADRAO = PRONT.secoes.map((s) => ({ titulo: s.titulo, base: s.id }));
+
+  // Nomes que os sistemas costumam dar a cada parte do prontuário, para ler o modelo colado pelo médico.
+  const SINONIMOS = {
+    qp: ['qp', 'queixa principal', 'queixa', 'queixas', 'motivo da consulta', 'motivo do atendimento', 'motivo', 'qd'],
+    hda: ['hda', 'historia da doenca atual', 'hma', 'historia da molestia atual', 'historia clinica', 'historia', 'anamnese', 's', 'subjetivo'],
+    ant: ['hpp', 'historia patologica pregressa', 'historia pregressa', 'antecedentes', 'antecedentes pessoais', 'antecedentes patologicos',
+      'comorbidades', 'alergias', 'medicacoes em uso', 'medicamentos em uso', 'med em uso', 'medicacao em uso', 'habitos'],
+    // Sinais vitais costumam ter campo próprio, com números: ficam livres, sem disputar as frases do exame.
+    ef: ['ef', 'exame fisico', 'exame', 'exame clinico', 'o', 'objetivo'],
+    hd: ['hd', 'hipotese diagnostica', 'hipoteses diagnosticas', 'hipotese', 'diagnostico', 'diagnosticos', 'impressao', 'impressao diagnostica',
+      'a', 'avaliacao', 'cid'],
+    cd: ['conduta', 'cd', 'plano', 'p', 'plano terapeutico', 'orientacoes', 'prescricao', 'encaminhamento', 'plano de cuidado', 'conduta e orientacoes'],
+  };
+
+  function baseDoRotulo(rotulo) {
+    const r = norm(rotulo).replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    for (const [base, nomes] of Object.entries(SINONIMOS)) if (nomes.includes(r)) return base;
+    // O começo também vale: "Exame físico geral" é exame físico.
+    for (const [base, nomes] of Object.entries(SINONIMOS)) if (nomes.some((n) => n.length > 2 && r.startsWith(n + ' '))) return base;
+    return '';
+  }
+
+  // Lê os títulos de um prontuário colado do sistema da unidade, na ordem em que aparecem:
+  // "QUEIXA PRINCIPAL:", "HDA - ...", "EXAME FÍSICO" sozinho na linha. Serve preenchido ou em branco.
+  function lerCampos(texto) {
+    const campos = [];
+    texto.split(/\r?\n/).forEach((linha) => {
+      const l = linha.trim().replace(/^[#*•>\s]+/, '');
+      if (!l) return;
+      let rotulo = '';
+      let resto = '';
+      let comDoisPontos = false;
+      const separado = l.match(/^(.{1,40}?)\s*(:|\s[-–]\s)\s*(.*)$/);
+      if (separado) {
+        [, rotulo, , resto] = separado;
+        comDoisPontos = separado[2] === ':';
+      } else if (l.length <= 40 && l === l.toUpperCase() && /[A-ZÀ-Ý]/.test(l)) {
+        rotulo = l;
+      }
+      rotulo = rotulo.replace(/[.\s]+$/, '').trim();
+      if (!rotulo || rotulo.split(/\s+/).length > 6 || !/\p{L}/u.test(rotulo)) return;
+      const base = baseDoRotulo(rotulo);
+      const letras = rotulo.replace(/[^\p{L}]/gu, '');
+      if (!base) {
+        // Título sem dois-pontos e sem nome conhecido é cabeçalho do documento ("HOSPITAL MUNICIPAL…"), não campo.
+        if (!comDoisPontos) return;
+        // Um "PA: 120x80" dentro do exame também não é campo: só vale título vazio ou todo em maiúsculas.
+        if (resto.trim() && !(letras.length >= 4 && rotulo === rotulo.toUpperCase())) return;
+      }
+      if (campos.some((c) => norm(c.titulo) === norm(rotulo))) return;
+      campos.push({ titulo: rotulo, base });
+    });
+    return campos;
+  }
+
+  const localAtual = () => estado.locais.find((l) => l.id === estado.localAtual) || null;
+  const unidade = () => localAtual() || {};
+
+  // Seções do prontuário de agora: as da unidade, se ela tiver modelo; senão, as do Pronto.
+  function secoesAtivas() {
+    const local = localAtual();
+    if (!local || !local.campos || !local.campos.length) return PRONT.secoes.map((s) => ({ ...s, base: s.id }));
+    const usadas = new Set();
+    return local.campos.map((c) => {
+      // Duas seções da unidade apontando para a mesma base: as frases ficam só na primeira.
+      const base = c.base && !usadas.has(c.base) ? c.base : '';
+      if (base) usadas.add(base);
+      const padrao = PRONT.secoes.find((s) => s.id === base);
+      return { id: base || 'livre:' + norm(c.titulo), titulo: c.titulo, rotulo: c.titulo, dica: padrao ? padrao.dica : 'Campo do sistema desta unidade.', base };
+    });
+  }
+
+  function usarLocal(id) {
+    estado.localAtual = id || '';
+    guarda.gravar('localAtual', estado.localAtual);
+    renderLocalAtual();
+    renderModelos();
+    atualizarFolha();
+    renderSecoes();
+  }
+
+  function renderLocalAtual() {
+    const local = localAtual();
+    $$('.local-atual__nome').forEach((el) => { el.textContent = local ? local.nome : 'Escolher local de atendimento'; });
+    $$('.local-atual').forEach((el) => el.classList.toggle('local-atual--vazio', !local));
+  }
+
+  function descricaoDoLocal(l) {
+    return [
+      l.cidade,
+      l.timbre ? 'timbre próprio' : '',
+      l.campos ? `prontuário em ${l.campos.length} campos` : '',
+      l.geo ? 'reconhece pela localização' : '',
+    ].filter(Boolean).join(' · ') || 'Cabeçalho com o nome da unidade';
+  }
+
+  function renderLocais() {
+    const atual = estado.localAtual;
+    $('#locaisLista').innerHTML = estado.locais.map((l) => `
+      <li class="local${l.id === atual ? ' local--atual' : ''}">
+        <button type="button" class="local__usar" data-usar-local="${esc(l.id)}" aria-pressed="${l.id === atual}">
+          <strong>${esc(l.nome)}</strong>
+          <span>${esc(descricaoDoLocal(l))}</span>
+        </button>
+        <button type="button" class="local__editar" data-editar-local="${esc(l.id)}">Editar</button>
+      </li>`).join('') + `
+      <li class="local${!atual ? ' local--atual' : ''}">
+        <button type="button" class="local__usar" data-usar-local="" aria-pressed="${!atual}">
+          <strong>Nenhum local</strong>
+          <span>Cabeçalho em branco e prontuário no padrão do Pronto</span>
+        </button>
+      </li>`;
+    $('#locaisVazio').hidden = estado.locais.length > 0;
+  }
+
+  function abrirLocais() {
+    renderLocais();
+    abrirDialogo('#dlgLocais');
+  }
+
+  // Cabeçalho da receita clicado: leva direto ao que falta.
+  function abrirUnidade() {
+    const local = localAtual();
+    if (local) return editarLocal(local.id);
+    if (!estado.locais.length) return editarLocal();
+    abrirLocais();
+  }
+
+  let rascunho = null;
+
+  function editarLocal(id) {
+    const existente = estado.locais.find((l) => l.id === id);
+    rascunho = existente
+      ? JSON.parse(JSON.stringify(existente))
+      : { id: 'l' + Date.now().toString(36), nome: '', endereco: '', cidade: '', telefone: '', timbre: '', campos: CAMPOS_PADRAO.map((c) => ({ ...c })), geo: null };
+    if (!rascunho.campos) rascunho.campos = CAMPOS_PADRAO.map((c) => ({ ...c }));
+    const form = $('#formLocal');
+    ['nome', 'endereco', 'cidade', 'telefone'].forEach((c) => { form.elements[c].value = rascunho[c] || ''; });
+    $('#prontAmostra').value = '';
+    $('#dlgLocalTitulo').textContent = existente ? existente.nome : 'Novo local';
+    $('#btnExcluirLocal').hidden = !existente;
+    $('#geoStatus').textContent = '';
+    $('#modeloStatus').textContent = '';
+    $('#recorte').hidden = true;
+    paginaDoModelo = null;
+    renderRascunho();
+    if ($('#dlgLocais').open) $('#dlgLocais').close('editar');
+    abrirDialogo('#dlgLocal');
+  }
+
+  function renderRascunho() {
+    $('#timbrePrevia').innerHTML = rascunho.timbre
+      ? `<img src="${rascunho.timbre}" alt="Timbre enviado">`
+      : '<span>Sem imagem: a receita sai com o nome e o endereço acima.</span>';
+    $('#timbreRemover').hidden = !rascunho.timbre;
+    const opcoes = (atual) => CAMPOS_PADRAO.map((b) => `<option value="${b.base}"${atual === b.base ? ' selected' : ''}>${esc(b.titulo)}</option>`).join('')
+      + `<option value=""${!atual ? ' selected' : ''}>Livre, sem frases</option>`;
+    $('#camposLocal').innerHTML = rascunho.campos.map((c, i) => `
+      <li class="campo-local" data-i="${i}">
+        <span class="campo-local__n">${i + 1}</span>
+        <input type="text" value="${esc(c.titulo)}" data-campo="titulo" aria-label="Nome do campo ${i + 1}" maxlength="40">
+        <select data-campo="base" aria-label="Frases do campo ${i + 1}">${opcoes(c.base)}</select>
+        <span class="campo-local__acoes">
+          <button type="button" data-campo-acao="subir" aria-label="Subir campo ${i + 1}"${i === 0 ? ' disabled' : ''}>${ICONE.subir}</button>
+          <button type="button" data-campo-acao="remover" aria-label="Remover campo ${i + 1}">${ICONE.remover}</button>
+        </span>
+      </li>`).join('');
+    $('#geoInfo').textContent = rascunho.geo
+      ? 'Localização salva. Ao abrir o Pronto aqui, este local é escolhido sozinho.'
+      : 'Salve a localização para o Pronto escolher este local sozinho quando você estiver nele.';
+    $('#btnGeoRemover').hidden = !rascunho.geo;
+    $('#btnGeoLocal').textContent = rascunho.geo ? 'Atualizar localização' : 'Usar minha localização atual';
+  }
+
+  // O timbre vira JPEG de até 1600 px: nítido no papel e leve o bastante para caber no navegador.
+  function prepararTimbre(arquivo) {
+    return new Promise((ok, falha) => {
+      if (!/^image\//.test(arquivo.type)) return falha(new Error('tipo'));
+      const leitor = new FileReader();
+      leitor.onerror = () => falha(new Error('leitura'));
+      leitor.onload = () => {
+        const img = new Image();
+        img.onerror = () => falha(new Error('imagem'));
+        img.onload = () => {
+          const escala = Math.min(1, 1600 / img.width);
+          const tela = document.createElement('canvas');
+          tela.width = Math.round(img.width * escala);
+          tela.height = Math.round(img.height * escala);
+          const ctx = tela.getContext('2d');
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, tela.width, tela.height);
+          ctx.drawImage(img, 0, 0, tela.width, tela.height);
+          let url = tela.toDataURL('image/jpeg', 0.86);
+          if (url.length > 700000) url = tela.toDataURL('image/jpeg', 0.7);
+          ok(url);
+        };
+        img.src = leitor.result;
+      };
+      leitor.readAsDataURL(arquivo);
+    });
+  }
+
+  function distanciaEmMetros(a, b) {
+    const rad = (g) => (g * Math.PI) / 180;
+    const dLat = rad(b.lat - a.lat);
+    const dLon = rad(b.lon - a.lon);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
+    return 6371000 * 2 * Math.asin(Math.sqrt(h));
+  }
+
+  // Ao abrir, se o médico já liberou a localização antes, o Pronto escolhe sozinho a unidade em que ele está.
+  // Nunca pede permissão por conta própria: isso só acontece quando ele clica em "Usar minha localização".
+  async function reconhecerLocal() {
+    const comLugar = estado.locais.filter((l) => l.geo);
+    if (!comLugar.length || !navigator.geolocation || !navigator.permissions) return;
+    try {
+      const permissao = await navigator.permissions.query({ name: 'geolocation' });
+      if (permissao.state !== 'granted') return;
+    } catch (e) {
+      return;
+    }
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const aqui = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      let maisPerto = null;
+      let menor = Infinity;
+      comLugar.forEach((l) => {
+        const d = distanciaEmMetros(aqui, l.geo);
+        if (d < menor) { menor = d; maisPerto = l; }
+      });
+      if (!maisPerto || menor > 500 || maisPerto.id === estado.localAtual) return;
+      usarLocal(maisPerto.id);
+      avisar(`Você está em ${maisPerto.nome}. O modelo de lá já está aplicado.`, 'Trocar', abrirLocais);
+    }, () => {}, { maximumAge: 300000, timeout: 8000 });
+  }
+
+  function excluirLocal(id) {
+    const i = estado.locais.findIndex((l) => l.id === id);
+    if (i < 0) return;
+    const [removido] = estado.locais.splice(i, 1);
+    const eraAtual = estado.localAtual === id;
+    guarda.gravar('locais', estado.locais);
+    if (eraAtual) usarLocal('');
+    avisar(`${removido.nome} excluído.`, 'Desfazer', () => {
+      estado.locais.splice(i, 0, removido);
+      guarda.gravar('locais', estado.locais);
+      if (eraAtual) usarLocal(removido.id);
+    });
+  }
+
+  // ----- Modelo do hospital: PDF, Word, foto ou print, lido no próprio aparelho -----
+
+  // Bibliotecas carregadas só quando o médico envia um arquivo daquele tipo.
+  const BIBLIOTECAS = {
+    pdf: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+    pdfTrabalhador: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+    word: 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
+    ocr: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js',
+  };
+  const scripts = {};
+  function carregarScript(url) {
+    if (!scripts[url]) {
+      scripts[url] = new Promise((ok, falha) => {
+        const s = document.createElement('script');
+        s.src = url;
+        s.onload = ok;
+        s.onerror = () => { delete scripts[url]; falha(new Error('script')); };
+        document.head.appendChild(s);
+      });
+    }
+    return scripts[url];
+  }
+
+  const statusModelo = (texto) => { $('#modeloStatus').textContent = texto; };
+
+  function imagemParaCanvas(img, largura = 1600) {
+    const escala = Math.min(1, largura / img.width);
+    const tela = document.createElement('canvas');
+    tela.width = Math.round(img.width * escala);
+    tela.height = Math.round(img.height * escala);
+    const ctx = tela.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, tela.width, tela.height);
+    ctx.drawImage(img, 0, 0, tela.width, tela.height);
+    return tela;
+  }
+
+  function carregarImagem(fonte) {
+    return new Promise((ok, falha) => {
+      const img = new Image();
+      img.onload = () => ok(img);
+      img.onerror = () => falha(new Error('imagem'));
+      img.src = fonte;
+    });
+  }
+
+  // O PDF entrega pedaços de texto soltos; junta os que estão na mesma altura da página, de cima para baixo.
+  function linhasDoPdf(itens) {
+    const linhas = new Map();
+    itens.forEach((it) => {
+      if (!it.str || !it.str.trim()) return;
+      const y = Math.round(it.transform[5] / 3) * 3;
+      if (!linhas.has(y)) linhas.set(y, []);
+      linhas.get(y).push({ x: it.transform[4], t: it.str });
+    });
+    return [...linhas.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([, partes]) => partes.sort((a, b) => a.x - b.x).map((p) => p.t).join(' ').replace(/\s{2,}/g, ' ').trim())
+      .join('\n');
+  }
+
+  async function lerPdf(arquivo) {
+    statusModelo('Lendo o PDF…');
+    await carregarScript(BIBLIOTECAS.pdf);
+    const pdfjs = window.pdfjsLib;
+    pdfjs.GlobalWorkerOptions.workerSrc = BIBLIOTECAS.pdfTrabalhador;
+    const doc = await pdfjs.getDocument({ data: await arquivo.arrayBuffer() }).promise;
+    let texto = '';
+    for (let i = 1; i <= Math.min(doc.numPages, 4); i++) {
+      const pagina = await doc.getPage(i);
+      texto += linhasDoPdf((await pagina.getTextContent()).items) + '\n';
+    }
+    // A primeira página vira imagem, para o recorte do timbre.
+    const primeira = await doc.getPage(1);
+    const largura = primeira.getViewport({ scale: 1 }).width;
+    const vista = primeira.getViewport({ scale: 1600 / largura });
+    const tela = document.createElement('canvas');
+    tela.width = Math.round(vista.width);
+    tela.height = Math.round(vista.height);
+    const ctx = tela.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, tela.width, tela.height);
+    await primeira.render({ canvasContext: ctx, viewport: vista }).promise;
+    return { texto: texto.trim(), pagina: tela };
+  }
+
+  async function lerWord(arquivo) {
+    statusModelo('Lendo o arquivo do Word…');
+    await carregarScript(BIBLIOTECAS.word);
+    const resultado = await window.mammoth.extractRawText({ arrayBuffer: await arquivo.arrayBuffer() });
+    return { texto: resultado.value.replace(/\n{2,}/g, '\n').trim(), pagina: null };
+  }
+
+  // Foto ou print: o texto é reconhecido no próprio aparelho. A imagem não é enviada a lugar nenhum.
+  async function lerImagem(arquivo) {
+    statusModelo('Abrindo a imagem…');
+    const url = URL.createObjectURL(arquivo);
+    try {
+      const pagina = imagemParaCanvas(await carregarImagem(url), 2000);
+      return { texto: await reconhecerTexto(pagina), pagina };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  async function reconhecerTexto(tela) {
+    statusModelo('Preparando a leitura do texto da imagem. Na primeira vez leva alguns segundos…');
+    await carregarScript(BIBLIOTECAS.ocr);
+    const { data } = await window.Tesseract.recognize(tela, 'por', {
+      logger: (m) => {
+        if (m.status === 'recognizing text') statusModelo(`Lendo o texto da imagem: ${Math.round(m.progress * 100)}%`);
+      },
+    });
+    return (data.text || '').trim();
+  }
+
+  let paginaDoModelo = null;
+
+  async function lerModelo(arquivo) {
+    if (!arquivo) return;
+    if (arquivo.size > 15 * 1024 * 1024) return statusModelo('O arquivo passa de 15 MB. Envie só a página do modelo, ou um print dela.');
+    const nome = arquivo.name.toLowerCase();
+    const tipo = arquivo.type;
+    $('#recorte').hidden = true;
+    paginaDoModelo = null;
+    try {
+      let lido;
+      if (tipo === 'application/pdf' || nome.endsWith('.pdf')) {
+        lido = await lerPdf(arquivo);
+        // PDF escaneado não tem texto: lê da imagem da página.
+        if (lido.texto.replace(/\s/g, '').length < 20) lido.texto = await reconhecerTexto(lido.pagina);
+      } else if (nome.endsWith('.docx')) {
+        lido = await lerWord(arquivo);
+      } else if (tipo.startsWith('image/')) {
+        lido = await lerImagem(arquivo);
+      } else if (tipo.startsWith('text/') || nome.endsWith('.txt')) {
+        lido = { texto: (await arquivo.text()).trim(), pagina: null };
+      } else {
+        return statusModelo('Esse formato o Pronto não lê. Envie PDF, Word (.docx), foto ou print.');
+      }
+
+      const campos = lido.texto ? lerCampos(lido.texto) : [];
+      const partes = [];
+      if (campos.length >= 2) {
+        rascunho.campos = campos;
+        $('#prontAmostra').value = lido.texto.slice(0, 6000);
+        renderRascunho();
+        partes.push(`${campos.length} campos de prontuário encontrados. Confira a lista abaixo`);
+      } else if (lido.texto) {
+        $('#prontAmostra').value = lido.texto.slice(0, 6000);
+        partes.push('Li o texto, mas não achei títulos de campos de prontuário');
+      } else {
+        partes.push('Não consegui ler texto nesse arquivo');
+      }
+      if (lido.pagina) {
+        paginaDoModelo = lido.pagina;
+        $('#recorteImg').src = lido.pagina.toDataURL('image/jpeg', 0.8);
+        $('#recorte').hidden = false;
+        atualizarRecorte();
+        partes.push('se for o receituário, use o topo como timbre');
+      }
+      statusModelo(partes.join('; ') + '.');
+    } catch (e) {
+      statusModelo('Não consegui ler esse arquivo. Confira a internet (a leitura usa um programa baixado na hora) ou cole o texto do prontuário abaixo.');
+    }
+  }
+
+  function atualizarRecorte() {
+    const altura = Number($('#recorteAltura').value);
+    $('#recorteSombra').style.top = `${altura}%`;
+    $('#recorteValor').textContent = `${altura}% da página`;
+  }
+
+  function usarTopoComoTimbre() {
+    if (!paginaDoModelo) return;
+    const fracao = Number($('#recorteAltura').value) / 100;
+    const tela = document.createElement('canvas');
+    tela.width = paginaDoModelo.width;
+    tela.height = Math.max(1, Math.round(paginaDoModelo.height * fracao));
+    tela.getContext('2d').drawImage(paginaDoModelo, 0, 0, tela.width, tela.height, 0, 0, tela.width, tela.height);
+    let url = imagemParaCanvas(tela).toDataURL('image/jpeg', 0.86);
+    if (url.length > 700000) url = imagemParaCanvas(tela).toDataURL('image/jpeg', 0.7);
+    rascunho.timbre = url;
+    renderRascunho();
+    statusModelo('Timbre recortado. Ele aparece no bloco "Timbre da receita" e sai no topo da receita.');
+  }
+
+  function ligarModelo() {
+    const zona = $('#envioModelo');
+    $('#modeloArquivo').addEventListener('change', (ev) => {
+      const arquivo = ev.target.files[0];
+      ev.target.value = '';
+      lerModelo(arquivo);
+    });
+    ['dragenter', 'dragover'].forEach((tipo) => zona.addEventListener(tipo, (ev) => { ev.preventDefault(); zona.classList.add('envio--sobre'); }));
+    ['dragleave', 'drop'].forEach((tipo) => zona.addEventListener(tipo, () => zona.classList.remove('envio--sobre')));
+    zona.addEventListener('drop', (ev) => {
+      ev.preventDefault();
+      lerModelo(ev.dataTransfer.files[0]);
+    });
+    $('#recorteAltura').addEventListener('input', atualizarRecorte);
+    $('#btnUsarTimbre').addEventListener('click', usarTopoComoTimbre);
+  }
+
+  function ligarLocais() {
+    ligarModelo();
+    $$('[data-abrir-locais]').forEach((b) => b.addEventListener('click', abrirLocais));
+    $('#btnLocais').addEventListener('click', abrirLocais);
+    $('#btnNovoLocal').addEventListener('click', () => editarLocal());
+    $('#locaisLista').addEventListener('click', (ev) => {
+      const editar = ev.target.closest('[data-editar-local]');
+      if (editar) return editarLocal(editar.dataset.editarLocal);
+      const usar = ev.target.closest('[data-usar-local]');
+      if (!usar) return;
+      usarLocal(usar.dataset.usarLocal);
+      $('#dlgLocais').close('usar');
+      const local = localAtual();
+      avisar(local ? `Atendendo em ${local.nome}.` : 'Sem local: cabeçalho em branco e prontuário no padrão.');
+    });
+
+    $('#timbreArquivo').addEventListener('change', async (ev) => {
+      const arquivo = ev.target.files[0];
+      ev.target.value = '';
+      if (!arquivo) return;
+      try {
+        rascunho.timbre = await prepararTimbre(arquivo);
+        renderRascunho();
+      } catch (e) {
+        avisar('Não consegui ler essa imagem. Envie um PNG ou JPG, como um print da tela.');
+      }
+    });
+    $('#timbreRemover').addEventListener('click', () => { rascunho.timbre = ''; renderRascunho(); });
+
+    $('#btnLerCampos').addEventListener('click', () => {
+      const campos = lerCampos($('#prontAmostra').value);
+      if (!campos.length) return avisar('Não achei os títulos dos campos. Cole o prontuário com eles, como "Queixa principal:".');
+      rascunho.campos = campos;
+      renderRascunho();
+      const livres = campos.filter((c) => !c.base).length;
+      avisar(`${campos.length} campos encontrados${livres ? `, ${livres} sem frases prontas` : ''}. Confira abaixo.`);
+    });
+    $('#btnCamposPadrao').addEventListener('click', () => { rascunho.campos = CAMPOS_PADRAO.map((c) => ({ ...c })); renderRascunho(); });
+    $('#btnAddCampo').addEventListener('click', () => {
+      rascunho.campos.push({ titulo: 'Novo campo', base: '' });
+      renderRascunho();
+      const ultimo = $$('#camposLocal input').pop();
+      if (ultimo) { ultimo.focus(); ultimo.select(); }
+    });
+    $('#camposLocal').addEventListener('input', (ev) => {
+      const li = ev.target.closest('.campo-local');
+      if (!li) return;
+      const campo = rascunho.campos[Number(li.dataset.i)];
+      if (ev.target.dataset.campo === 'titulo') campo.titulo = ev.target.value;
+      if (ev.target.dataset.campo === 'base') campo.base = ev.target.value;
+    });
+    $('#camposLocal').addEventListener('click', (ev) => {
+      const botao = ev.target.closest('[data-campo-acao]');
+      if (!botao) return;
+      const i = Number(botao.closest('.campo-local').dataset.i);
+      if (botao.dataset.campoAcao === 'remover') rascunho.campos.splice(i, 1);
+      if (botao.dataset.campoAcao === 'subir' && i > 0) [rascunho.campos[i - 1], rascunho.campos[i]] = [rascunho.campos[i], rascunho.campos[i - 1]];
+      renderRascunho();
+    });
+
+    $('#btnGeoLocal').addEventListener('click', () => {
+      const status = $('#geoStatus');
+      if (!navigator.geolocation) { status.textContent = 'Este navegador não informa a localização.'; return; }
+      status.textContent = 'Buscando sua localização…';
+      navigator.geolocation.getCurrentPosition((pos) => {
+        rascunho.geo = { lat: Number(pos.coords.latitude.toFixed(5)), lon: Number(pos.coords.longitude.toFixed(5)) };
+        status.textContent = `Pronto, com precisão de cerca de ${Math.max(5, Math.round(pos.coords.accuracy))} m.`;
+        renderRascunho();
+      }, () => {
+        status.textContent = 'O navegador não liberou a localização. Você ainda escolhe o local pela lista.';
+      }, { enableHighAccuracy: true, timeout: 12000 });
+    });
+    $('#btnGeoRemover').addEventListener('click', () => { rascunho.geo = null; $('#geoStatus').textContent = ''; renderRascunho(); });
+
+    $('#btnExcluirLocal').addEventListener('click', () => {
+      $('#dlgLocal').close('excluir');
+      excluirLocal(rascunho.id);
+    });
+
+    $('#formLocal').addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const form = ev.target;
+      const nome = form.elements.nome.value.trim();
+      if (!nome) {
+        form.elements.nome.focus();
+        return avisar('Dê um nome ao local, como "UPA Centro".');
+      }
+      ['nome', 'endereco', 'cidade', 'telefone'].forEach((c) => { rascunho[c] = form.elements[c].value.trim(); });
+      rascunho.campos = rascunho.campos.filter((c) => c.titulo.trim()).map((c) => ({ titulo: c.titulo.trim(), base: c.base }));
+      const lista = estado.locais.slice();
+      const i = lista.findIndex((l) => l.id === rascunho.id);
+      const novo = i < 0;
+      if (novo) lista.push(rascunho); else lista[i] = rascunho;
+      if (!guarda.gravar('locais', lista)) {
+        return avisar('Não coube no navegador: a imagem do timbre é grande demais. Envie um recorte só do topo da receita.');
+      }
+      estado.locais = lista;
+      $('#dlgLocal').close('salvar');
+      usarLocal(rascunho.id);
+      avisar(novo ? `${rascunho.nome} salvo. Quando você atender lá de novo, o modelo já estará pronto.` : `${rascunho.nome} atualizado.`);
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Perfil, avisos e área de transferência                              */
   /* ------------------------------------------------------------------ */
 
-  const CAMPOS_PERFIL = ['nome', 'crm', 'uf', 'especialidade', 'unidade', 'endereco', 'cidade', 'telefone'];
+  // Dados do médico. Os da unidade ficam em cada local de atendimento.
+  const CAMPOS_PERFIL = ['nome', 'crm', 'uf', 'especialidade'];
 
   function renderPerfil() {
     const pf = estado.perfil;
@@ -874,7 +1466,7 @@
     dlg.showModal();
   }
 
-  const PERFIL_SUB = 'Aparecem no cabeçalho e na assinatura da receita. Ficam salvos só neste navegador.';
+  const PERFIL_SUB = 'Aparecem na assinatura da receita. Ficam salvos só neste navegador.';
 
   // motivo: por que o preenchimento está sendo pedido agora (por exemplo, na hora de imprimir).
   function abrirPerfil(motivo) {
@@ -1126,7 +1718,10 @@
 
     $$('[data-fechar]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close('cancelar')));
     $('#btnPerfil').addEventListener('click', abrirPerfil);
-    $('#folha').addEventListener('click', (ev) => { if (ev.target.closest('[data-abrir="perfil"]')) abrirPerfil(); });
+    $('#folha').addEventListener('click', (ev) => {
+      if (ev.target.closest('[data-abrir="perfil"]')) abrirPerfil();
+      if (ev.target.closest('[data-abrir="local"]')) abrirUnidade();
+    });
     $('#dlgPerfil').addEventListener('close', (ev) => {
       // Se o preenchimento foi pedido na hora de imprimir, a impressão segue de onde parou.
       const iaImprimir = estado.imprimirAoSalvar;
@@ -1138,7 +1733,7 @@
       const dados = Object.fromEntries(new FormData($('#formPerfil')).entries());
       Object.keys(dados).forEach((c) => { dados[c] = dados[c].trim(); });
       estado.perfil = dados;
-      guarda.gravar('perfil', dados);
+      guarda.gravar('perfil', estado.perfil);
       renderPerfil();
       atualizarFolha();
       if (iaImprimir) return imprimir(true);
@@ -1166,6 +1761,8 @@
   }
 
   ligar();
+  ligarLocais();
+  renderLocalAtual();
   renderPerfil();
   renderModelos();
   renderItens();
@@ -1176,4 +1773,5 @@
   // Com teclado, o cursor já começa na linha de escrita: a primeira ação é digitar o remédio.
   else if (comMouse()) $('#busca').focus({ preventScroll: true });
   setTimeout(() => document.body.classList.remove('entrando'), 900);
+  reconhecerLocal();
 })();

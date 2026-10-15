@@ -50,6 +50,36 @@ saem pelo mesmo caminho por onde entraram, e ações secundárias um nível abai
 (menu "⋯" e opções do item). Respeita as preferências de menos movimento,
 menos transparência e mais contraste.
 
+## Locais de atendimento
+
+O plantonista atende em várias unidades, e cada uma tem seu receituário e seu
+sistema. Em "⋯ > Locais de atendimento" ele cadastra cada unidade uma vez:
+
+- **Dados da unidade:** nome, endereço, cidade e telefone, que vão no
+  cabeçalho e na data da receita.
+- **Modelo do hospital:** o médico envia o receituário ou o prontuário da
+  unidade em PDF, Word (.docx), foto ou print. O Pronto extrai o texto no
+  próprio aparelho (pdf.js para PDF, mammoth para Word e Tesseract para foto ou
+  PDF escaneado, carregados só quando precisa), monta os campos do prontuário
+  e mostra a primeira página com um controle para recortar o topo como timbre.
+  O arquivo não é guardado nem enviado a lugar nenhum.
+- **Timbre:** um print ou foto do topo do receituário oficial (logos da
+  prefeitura, da unidade). Sai no lugar do cabeçalho do Pronto, na tela e no
+  papel. A imagem é reduzida para JPEG de até 1600 px antes de guardar.
+- **Prontuário da unidade:** ele cola um prontuário do sistema de lá
+  (preenchido ou em branco) e o Pronto lê os títulos dos campos, na mesma
+  ordem e com os mesmos nomes. Cada campo aponta para uma seção do Pronto, que
+  dá as frases clicáveis, ou fica livre (ex.: "Classificação de risco").
+  "Copiar" e "Copiar tudo" saem com os nomes da unidade.
+- **Localização (opcional):** salva as coordenadas da unidade. Se o médico já
+  liberou a localização no navegador, ao abrir o Pronto perto de uma unidade
+  salva (até 500 m) ela é escolhida sozinha. O Pronto nunca pede permissão por
+  conta própria.
+
+O local escolhido fica guardado e volta na próxima abertura. Modelos de
+receita salvos com um local ativo aparecem só nele. Tudo fica no navegador do
+médico (`rx.locais`, `rx.localAtual`); outro aparelho não vê esses dados.
+
 ## Primeiro uso e medição
 
 Desenhado com a skill revenue-centric-design
