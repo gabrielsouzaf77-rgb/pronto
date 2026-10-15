@@ -1,10 +1,11 @@
-# Rx Plantão (MVP)
+# Pronto (MVP)
 
 Facilitador de redação de prescrição e prontuário para plantão. O médico escolhe
 o medicamento e a apresentação; a linha da receita entra com via, intervalo e
 duração usuais, e ele ajusta o que quiser antes de imprimir ou copiar.
 
-"Rx Plantão" é um nome provisório.
+O nome antigo era "Rx Plantão"; o repositório e o endereço do site
+mantêm esse nome para não quebrar o link já enviado. A marca está em `marca/`.
 
 ## Como abrir
 
@@ -30,6 +31,14 @@ publicar, basta subir a pasta em qualquer hospedagem de site estático.
 - **Meus modelos:** receitas inteiras salvas para repetir com um clique.
 - **Prontuário:** frases clicáveis por queixa, exame físico e conduta, com o
   resumo da prescrição atual. Sai em texto para copiar.
+
+## Marca
+
+O nome é **Pronto**: a receita fica pronta, é o Pronto Atendimento onde o médico
+atende e é a raiz de prontuário. O logotipo "pronto." é de traço único,
+desenhado à mão em SVG (sem depender de fonte), e o ponto final azul é o
+símbolo. Arquivos em `marca/`; o guia completo (cores, tipografia, voz, usos)
+está em https://claude.ai/artifact/EFyheFbvJE6dm9KPou9Y85.
 
 ## Visual
 
@@ -112,5 +121,6 @@ A página publicada é o miolo do `<body>` de `index.html` (sem `<html>`,
 `<head>` e `<body>`), precedido do `<title>`, do `styles.css` e de
 duas marcações: `window.RX_SEM_IMPRESSAO = true` (o visualizador não abre a
 impressão, então o botão some) e `window.RX_EXEMPLO = true` (abre com uma
-receita de exemplo). Para atualizar o link, gerar essa página de novo e
-publicar no mesmo endereço junto com os quatro arquivos de `assets/`.
+receita de exemplo). Para atualizar o link, rodar
+`python ferramentas/montar_pagina_teste.py <saída>` e publicar no mesmo
+endereço junto com os arquivos de `assets/` e os ícones de `marca/`.

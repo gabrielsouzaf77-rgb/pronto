@@ -87,6 +87,10 @@ hr { border: 0; }
 .rolou .top { box-shadow: 0 1px 0 rgba(15, 28, 46, 0.08); }
 
 .brand { display: flex; align-items: center; gap: 0.625rem; }
+/* Logotipo no computador, símbolo no celular. */
+.brand__logo { display: block; height: 1.5rem; width: auto; }
+.brand__simbolo { display: none; width: 1.875rem; height: 1.875rem; }
+
 .brand__icon {
   display: grid;
   place-items: center;
@@ -573,7 +577,8 @@ input.rx__qtd { height: 1.75rem; padding: 0 0.375rem; margin-right: -0.375rem; f
 
 @media (max-width: 45rem) {
   .top { grid-template-columns: auto 1fr auto; gap: 0.625rem; padding: 0 1rem; }
-  .brand__name { display: none; }
+  .brand__logo { display: none; }
+  .brand__simbolo { display: block; }
   .tabs { justify-self: center; }
   .tabs__btn { min-width: 6.25rem; padding: 0.4375rem 0.5rem; }
 

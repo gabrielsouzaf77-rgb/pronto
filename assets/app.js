@@ -841,7 +841,7 @@
 
   function textoDoResumo() {
     const r = dadosDoResumo();
-    const linhas = ['Rx Plantão: resumo de uso', `Receitas feitas: ${r.receitas}${r.media ? ` (tempo médio de ${r.media})` : ''}`];
+    const linhas = ['Pronto: resumo de uso', `Receitas feitas: ${r.receitas}${r.media ? ` (tempo médio de ${r.media})` : ''}`];
     if (r.maisUsados.length) linhas.push(`Mais usados: ${r.maisUsados.join(', ')}`);
     linhas.push(`Buscas sem resultado: ${r.semResultado.length ? r.semResultado.join(', ') : 'nenhuma'}`);
     if (r.alteradas.length) {
