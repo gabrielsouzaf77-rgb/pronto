@@ -1,4 +1,15 @@
 /* Uma folha branca sobre azul claro. A receita é a tela; o resto é material translúcido por cima. */
+
+/* Títulos em Outfit: o mesmo desenho geométrico do logotipo (o "o" redondo, traço uniforme).
+   Guardada no próprio site (licença OFL em fontes/OFL.txt), sem depender do Google Fonts. */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('fontes/outfit-600.woff2') format('woff2');
+}
+
 :root {
   color-scheme: light;
   --fundo: #f4f9fe;
@@ -20,6 +31,7 @@
   --ambar-fundo: #fff5e2;
 
   /* Fonte do sistema: já traz ajuste óptico e legibilidade em cada plataforma. */
+  --fonte-titulo: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --fonte: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, Roboto, 'Helvetica Neue', Arial, sans-serif;
 
   /* Mola sem ressalto: chega rápido e assenta suave. */
@@ -928,6 +940,20 @@ body[data-tab='prontuario'] .toast { bottom: calc(9.25rem + env(safe-area-inset-
   .campo-local { row-gap: 0.25rem; padding-bottom: 0.375rem; border-bottom: 1px solid var(--linha); }
   .dlg { padding: 1.375rem; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Títulos na fonte da marca                                           */
+/* ------------------------------------------------------------------ */
+
+/* Só títulos: texto corrido, campos, botões e a receita continuam na fonte do aparelho. */
+.lateral__titulo, .folha__unidade, .inicio__titulo, .resumo__numeros strong, .dlg h2,
+.bloco-local legend, .bloco-local__titulo, .tour__titulo, .entrada__titulo, .plano__preco strong {
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+/* No papel, a receita segue sóbria: o nome da unidade volta para a fonte do sistema. */
+.folha--impressa .folha__unidade { font-family: var(--fonte); font-weight: 700; letter-spacing: -0.022em; }
 
 /* ------------------------------------------------------------------ */
 /* Tour de boas-vindas                                                 */

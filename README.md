@@ -54,6 +54,10 @@ saem pelo mesmo caminho por onde entraram, e ações secundárias um nível abai
 (menu "⋯" e opções do item). Respeita as preferências de menos movimento,
 menos transparência e mais contraste.
 
+Os títulos usam **Outfit 600** (`assets/fontes/`, licença OFL), escolhida pelo
+Gabriel em 22/10/2026 por ter o mesmo desenho geométrico do logotipo. Texto
+corrido, campos, botões e a receita impressa continuam na fonte do sistema.
+
 ## Por diagnóstico
 
 Barra à esquerda da folha (no celular, abre pelo botão "Por diagnóstico"). O
