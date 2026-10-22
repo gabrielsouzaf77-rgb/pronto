@@ -28,6 +28,11 @@
   const GERENCIAR_MP = 'https://www.mercadopago.com.br/subscriptions';
   const SINCRONIZADAS = ['perfil', 'padroes', 'modelos', 'uso', 'metricas', 'locais', 'localAtual', 'diagnosticos', 'tourVisto'];
   const CHAVE_SESSAO = `sb-${new URL(SUPABASE.url).hostname.split('.')[0]}-auth-token`;
+  const VERSAO_TERMOS = '2026-10-22';
+
+  // Marcas como as diretrizes de cada empresa pedem: o "G" colorido e a maçã preta.
+  const ICONE_GOOGLE = '<svg viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18Z"/><path fill="#FBBC05" d="M3.97 10.72A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.18.29-1.72V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.05l3.01-2.33Z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58Z"/></svg>';
+  const ICONE_APPLE = '<svg viewBox="0 0 17 20" aria-hidden="true"><path fill="currentColor" d="M14.06 10.62c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76A4.25 4.25 0 0 0 2.97 7.8C1.42 10.48 2.57 14.45 4.08 16.63c.74 1.07 1.62 2.27 2.77 2.23 1.11-.05 1.53-.72 2.88-.72 1.34 0 1.72.72 2.89.7 1.2-.02 1.96-1.09 2.69-2.16.85-1.24 1.2-2.44 1.22-2.5-.03-.01-2.34-.9-2.37-3.56ZM11.86 4.15c.61-.74 1.02-1.77.91-2.8-.88.04-1.94.59-2.57 1.32-.56.65-1.06 1.7-.93 2.7.98.08 1.98-.5 2.59-1.22Z"/></svg>';
 
   const $ = (sel, raiz = document) => raiz.querySelector(sel);
   const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -50,6 +55,12 @@
           <img class="entrada__marca" src="marca/pronto-logo.svg" alt="pronto." width="96" height="32">
           <h1 class="entrada__titulo" id="entradaTitulo">Entre para usar o Pronto</h1>
           <p class="entrada__sub">10 atendimentos grátis para começar e, depois, 1 por dia. Sem limite por ${PRECO} por mês.</p>
+          <div class="entrada__social" id="entradaSocial" hidden>
+            <button type="button" class="social social--google" data-provedor="google" hidden>${ICONE_GOOGLE}<span>Continuar com o Google</span></button>
+            <button type="button" class="social social--apple" data-provedor="apple" hidden>${ICONE_APPLE}<span>Continuar com a Apple</span></button>
+            <p class="entrada__termos">Ao continuar, você aceita os <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a> e a <a href="privacidade.html" target="_blank" rel="noopener">Política de privacidade</a>.</p>
+            <p class="entrada__ou"><span>ou com e-mail</span></p>
+          </div>
           <div class="entrada__abas" role="tablist" aria-label="Entrar ou criar conta">
             <button type="button" role="tab" aria-selected="true" data-modo="entrar">Entrar</button>
             <button type="button" role="tab" aria-selected="false" data-modo="criar">Criar conta</button>
@@ -64,6 +75,13 @@
           <p class="entrada__nota">Dados de paciente nunca saem deste aparelho. Esqueceu a senha? Fale com quem te convidou para o Pronto.</p>
         </div>
       </div>`);
+    $('#entradaSocial').addEventListener('click', (ev) => {
+      const botao = ev.target.closest('[data-provedor]');
+      if (botao) entrarCom(botao.dataset.provedor, botao);
+    });
+    mostrarProvedores();
+    mostrarErroDoRetorno();
+
     const form = $('#formEntrada');
     let modo = 'entrar';
     $('.entrada__abas').addEventListener('click', (ev) => {
@@ -107,6 +125,45 @@
         botao.disabled = false;
       }
     });
+  }
+
+  // Google e Apple só aparecem depois de ligados no Supabase (Authentication → Providers):
+  // botão que leva a uma página de erro é pior do que botão nenhum.
+  async function mostrarProvedores() {
+    try {
+      const r = await fetch(`${SUPABASE.url}/auth/v1/settings`, { headers: { apikey: SUPABASE.chave } });
+      const ligados = (await r.json()).external || {};
+      let algum = false;
+      ['google', 'apple'].forEach((p) => {
+        const botao = $(`[data-provedor="${p}"]`);
+        if (botao && ligados[p]) { botao.hidden = false; algum = true; }
+      });
+      $('#entradaSocial').hidden = !algum;
+    } catch (e) { /* sem conexão: fica só o e-mail */ }
+  }
+
+  // Sai para a página do Google ou da Apple e volta para cá já com a sessão.
+  async function entrarCom(provedor, botao) {
+    if (!sb) { $('#entradaErro').textContent = 'Sem conexão com o Pronto agora. Confira a internet e tente de novo.'; return; }
+    botao.disabled = true;
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: provedor,
+      options: { redirectTo: location.origin + location.pathname },
+    });
+    if (error) {
+      botao.disabled = false;
+      $('#entradaErro').textContent = `Não foi possível abrir a entrada com ${provedor === 'apple' ? 'a Apple' : 'o Google'}. Tente de novo.`;
+    }
+  }
+
+  // Se o Google ou a Apple devolverem erro (cancelou, conta recusada), ele vem no endereço.
+  function mostrarErroDoRetorno() {
+    const params = new URLSearchParams(location.hash.slice(1) + '&' + location.search.slice(1));
+    if (!params.get('error')) return;
+    $('#entradaErro').textContent = params.get('error') === 'access_denied'
+      ? 'A entrada foi cancelada. Tente de novo ou use o e-mail.'
+      : 'Não foi possível entrar agora. Tente de novo ou use o e-mail.';
+    history.replaceState(null, '', location.pathname);
   }
 
   function fecharEntrada() {
@@ -347,6 +404,10 @@
     usuario = user;
     fecharEntrada();
     if (!primeiraVez) return;
+    // Quem entrou pelo Google ou pela Apple aceitou os termos no texto embaixo dos botões.
+    if (!(user.user_metadata || {}).termos_aceitos_em) {
+      sb.auth.updateUser({ data: { termos_aceitos_em: new Date().toISOString(), termos_versao: VERSAO_TERMOS } });
+    }
     await baixarDados();
     await atualizarSituacao();
     aoVoltarDoPagamento();

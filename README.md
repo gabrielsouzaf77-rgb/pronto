@@ -173,6 +173,32 @@ imprimir ou copiar de novo não gasta outro. Ele recomeça em "Nova receita",
 4. Testar com um comprador de teste do Mercado Pago antes de trocar para o
    token de produção.
 
+### Entrar com Google e Apple (feito pelo Gabriel, uma vez)
+
+Os botões ficam escondidos até o provedor ser ligado no Supabase (o app
+consulta `/auth/v1/settings`). Quem entra por eles aceita os termos pelo texto
+embaixo dos botões; o aceite vai para os metadados da conta. Se o e-mail já
+tiver conta com senha, o Supabase junta as duas.
+
+Antes dos dois: Supabase → Authentication → URL Configuration → Site URL
+`https://gabrielsouzaf77-rgb.github.io/pronto/` e, em Redirect URLs, esse
+mesmo endereço e `http://localhost:4210/`.
+
+- **Google** (grátis): console.cloud.google.com → projeto novo → Tela de
+  consentimento OAuth (Externo, nome "Pronto") → Credenciais → ID do cliente
+  OAuth, tipo Aplicativo da Web. Origem: `https://gabrielsouzaf77-rgb.github.io`.
+  URI de redirecionamento:
+  `https://ukuzyoutntepdullrpzq.supabase.co/auth/v1/callback`. Colar o ID e o
+  segredo em Supabase → Authentication → Sign In / Providers → Google.
+- **Apple** (exige o Apple Developer Program, US$ 99 por ano):
+  developer.apple.com → Identifiers → App ID com "Sign in with Apple" e um
+  Services ID (ex.: `br.pronto.web`) com o domínio
+  `ukuzyoutntepdullrpzq.supabase.co` e o retorno
+  `https://ukuzyoutntepdullrpzq.supabase.co/auth/v1/callback`. Em Keys, criar
+  uma chave de Sign in with Apple e baixar o `.p8` (anotar Key ID e Team ID).
+  No Supabase → Providers → Apple: Services ID e o segredo gerado a partir do
+  `.p8`. Esse segredo vence a cada 6 meses e precisa ser gerado de novo.
+
 ## Primeiro uso e medição
 
 Desenhado com a skill revenue-centric-design
