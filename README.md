@@ -121,8 +121,57 @@ Duas opções no menu "⋯" cobrem isso:
   Feito para o computador compartilhado da UPA, onde o próximo plantonista
   veria os modelos e o CRM do anterior.
 
-Contas com login, para os dados aparecerem em qualquer aparelho, ficaram como
-passo final (decisão do Gabriel em 15/10/2026).
+Com as contas (abaixo), "Levar para outro aparelho" fica escondido, porque a
+sincronização faz o mesmo, e "Sair deste computador" vira "Sair da conta".
+Na demonstração e no link de teste do Claude, que funcionam sem conta, as duas
+opções continuam como antes.
+
+## Tour de boas-vindas
+
+`assets/tour.js`. No primeiro acesso (depois de entrar na conta), 9 cartões
+apontam o principal: local de atendimento, modelo do hospital, busca do
+remédio, imprimir/copiar, prontuário, "Por diagnóstico" e o menu. O último
+oferece "Cadastrar meu local". Fica marcado em `rx.tourVisto` (que também vai
+para a conta, então aparece uma vez por médico). Reabre pelo menu "Ver o tour
+de novo" ou com `?tour` no endereço. Pedido do Gabriel em 22/10/2026.
+
+## Contas e assinatura
+
+Pedido do Gabriel em 22/10/2026: login obrigatório, 10 atendimentos grátis de
+boas-vindas, depois 1 por dia, e assinatura de **R$ 49,90/mês** pelo
+**Mercado Pago**. Um atendimento é a receita e o prontuário do mesmo paciente:
+imprimir ou copiar de novo não gasta outro. Ele recomeça em "Nova receita",
+"Limpar prontuário" ou depois de 40 minutos.
+
+- **Supabase**, projeto `pronto` (ref `ukuzyoutntepdullrpzq`, São Paulo, plano
+  grátis). SQL em `supabase/migrations/`, funções em `supabase/functions/`.
+- **Regra no servidor:** `consumir(atendimento)` registra e decide (10 de
+  boas-vindas, 1 por dia no horário de Brasília, assinatura libera). O app não
+  consegue se marcar como assinante: `contas` só muda pelo webhook.
+- **Entrar:** e-mail e senha. A conta é criada pela função `cadastrar`, já
+  confirmada, porque o e-mail padrão do Supabase só entrega para a equipe.
+  Ainda não há "esqueci a senha": precisa de SMTP próprio (ex.: Resend).
+- **Sincronização:** o app continua gravando no navegador; `conta.js` sobe cada
+  gravação para a tabela `dados` e, ao entrar, baixa o que está na conta.
+  Paciente não está em nenhuma chave sincronizada.
+- **Resposta na hora:** a liberação usa a última situação conhecida e o
+  servidor confirma logo depois; sem internet na abertura, o Pronto não trava
+  o plantão.
+- **Termos e privacidade:** `termos.html` e `privacidade.html`, rascunhos com
+  razão social, CNPJ e contato em branco. Revisar com advogado antes de cobrar.
+
+### Ligar o Mercado Pago (feito pelo Gabriel, uma vez)
+
+1. Na conta do Mercado Pago: Suas integrações → criar aplicação → copiar o
+   **Access Token** (o de teste primeiro, depois o de produção).
+2. No Supabase: projeto `pronto` → Edge Functions → Secrets → criar
+   `MP_ACCESS_TOKEN` com esse token.
+3. No Mercado Pago, na aplicação: Webhooks → URL
+   `https://ukuzyoutntepdullrpzq.supabase.co/functions/v1/mp-webhook`, eventos
+   de **Planos e assinaturas**. Copiar a assinatura secreta e criar o segredo
+   `MP_WEBHOOK_SECRET` no Supabase.
+4. Testar com um comprador de teste do Mercado Pago antes de trocar para o
+   token de produção.
 
 ## Primeiro uso e medição
 
@@ -165,6 +214,13 @@ escassez ou hábito forçado: não cabem numa ferramenta médica.
   itens estão com `revisado: false`.
 - Revisão das frases de `assets/dados-prontuario.js`.
 - Consulta de enquadramento à Anvisa antes de cobrar de clientes.
+- Ligar o Mercado Pago (passos em "Contas e assinatura") e testar com comprador
+  de teste.
+- Preencher razão social, CNPJ e contato em `termos.html` e `privacidade.html`
+  e passar por advogado.
+- SMTP próprio no Supabase para "esqueci a senha" e confirmação de e-mail
+  (hoje qualquer e-mail cria conta, o que permite repetir os 10 grátis).
+- Levar o código para um repositório privado (Vercel ou Cloudflare Pages).
 
 ## Arquivos
 
@@ -173,6 +229,11 @@ escassez ou hábito forçado: não cabem numa ferramenta médica.
 | `index.html` | Estrutura da página |
 | `assets/styles.css` | Visual, celular e impressão |
 | `assets/app.js` | Busca, itens, folha, modelos e prontuário |
+| `assets/tour.js` | Tour de boas-vindas |
+| `assets/conta.js` | Entrada, sincronização, uso grátis e assinatura |
+| `assets/demo.js` | Dados da demonstração (`?demo`) |
+| `termos.html`, `privacidade.html` | Rascunhos legais (`assets/legal.css`) |
+| `supabase/` | Banco (migrações) e funções do servidor |
 | `assets/dados-medicamentos.js` | Base de medicamentos e posologias |
 | `assets/dados-prontuario.js` | Queixas e frases do prontuário |
 

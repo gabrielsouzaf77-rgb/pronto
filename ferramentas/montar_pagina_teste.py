@@ -2,7 +2,8 @@
 
 O publicador do artefato já envolve o conteúdo em <html>/<head>/<body>, então aqui vai só o
 miolo do <body>, com o título, os ícones, o CSS e duas marcações da versão de teste:
-sem impressão (o visualizador não permite) e com uma receita de exemplo ao abrir.
+sem impressão (o visualizador não permite), sem conta (o visualizador bloqueia o Supabase) e
+com uma receita de exemplo ao abrir.
 
 Uso: python ferramentas/montar_pagina_teste.py [arquivo de saída]
 """
@@ -26,6 +27,7 @@ pagina = (
     '<script>\n'
     '  window.RX_SEM_IMPRESSAO = true;\n'
     '  window.RX_EXEMPLO = true;\n'
+    '  window.RX_SEM_CONTA = true;\n'
     "  document.body.classList.add('entrando');\n"
     "  document.body.dataset.tab = 'prescricao';\n"
     '</script>\n'

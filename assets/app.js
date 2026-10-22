@@ -639,6 +639,23 @@
     return guardada ? `${frase} ${guardada}` : frase;
   }
 
+  // Um atendimento = um paciente: receita e prontuário dele contam como um uso só, quantas vezes
+  // forem impressos ou copiados. Recomeça em "Nova receita", em "Limpar prontuário" ou depois de
+  // 40 minutos, que é mais do que dura um atendimento de plantão.
+  function idAtendimento() {
+    const a = estado.atendimento;
+    if (a && Date.now() - a.inicio < 40 * 60 * 1000) return a.id;
+    estado.atendimento = { id: crypto.randomUUID(), inicio: Date.now() };
+    return estado.atendimento.id;
+  }
+
+  // Pergunta à conta (conta.js) se este atendimento pode sair. Sem conta (demonstração, link de
+  // teste) ou na receita de exemplo, sempre pode.
+  function liberar() {
+    if (estado.exemplo || !window.ProntoPortao) return true;
+    return window.ProntoPortao.liberar(idAtendimento());
+  }
+
   // forcar: imprime mesmo sem nome e CRM (o médico decidiu assim, ou acabou de sair do preenchimento).
   function imprimir(forcar) {
     if (!estado.itens.length) return avisar('Escolha um medicamento antes de imprimir.');
@@ -647,6 +664,7 @@
       estado.imprimirAoSalvar = true;
       return abrirPerfil('Falta seu nome e CRM para a receita sair completa. Você preenche uma vez só e fica salvo neste navegador.');
     }
+    if (!liberar()) return;
     // RDC 471/2021, art. 10: a 2ª via fica retida na farmácia e a 1ª volta com o paciente.
     const vias = temAntimicrobiano() ? ['1ª via · paciente', '2ª via · retenção na farmácia'] : [''];
     $('#impressao').innerHTML = vias.map((v) => `<article class="folha folha--impressa">${folhaParaImprimir(v)}</article>`).join('');
@@ -818,6 +836,7 @@
       const titulo = secoesAtivas().find((s) => s.id === sec.dataset.sec).titulo;
       if (!texto) return avisar(`${titulo}: ainda está vazio.`);
       if (!/[.!?]$/.test(texto)) texto += '.';
+      if (!liberar()) return;
       return copiar(texto, `${titulo} copiado. É só colar no campo do sistema.`);
     }
 
@@ -1717,6 +1736,7 @@
     const antes = { itens: estado.itens, paciente: { ...estado.paciente }, orientacoes: estado.orientacoes, diagnostico: estado.diagnostico };
     const relogio = { inicio: estado.inicio, concluida: estado.concluida };
     // Atendimento novo: o diagnóstico da barra também recomeça.
+    estado.atendimento = null;
     estado.diagnostico = '';
     estado.diagnosticoContado = '';
     estado.hdAutomatico = '';
@@ -1797,6 +1817,7 @@
     const antes = { ...estado.pront.sec };
     if (!Object.values(antes).some((v) => v && v.trim())) return avisar('O prontuário já está vazio.');
     estado.pront.sec = {};
+    estado.atendimento = null;
     renderSecoes();
     avisar('Prontuário limpo.', 'Desfazer', () => {
       estado.pront.sec = antes;
@@ -1907,6 +1928,7 @@
     function copiarProntuario(botao) {
       const texto = textoDoProntuario();
       if (!texto) return avisar('O prontuário está vazio.');
+      if (!liberar()) return;
       const guardado = aprenderDiagnostico();
       copiar(texto, `Prontuário copiado. É só colar no sistema da unidade.${guardado ? ' ' + guardado : ''}`);
       if (botao) {
@@ -1925,6 +1947,7 @@
     $('#btnCopiar').addEventListener('click', () => {
       if (document.body.dataset.tab === 'prontuario') return copiarProntuario();
       if (!estado.itens.length) return avisar('Escolha um medicamento antes de copiar.');
+      if (!liberar()) return;
       const tempo = concluir();
       copiar(textoDaReceita(), tempo ? `${tempo} Copiada: é só colar no sistema da unidade.` : 'Prescrição copiada. É só colar no sistema da unidade.');
     });
@@ -2136,4 +2159,26 @@
   else if (comMouse()) $('#busca').focus({ preventScroll: true });
   setTimeout(() => document.body.classList.remove('entrando'), 900);
   reconhecerLocal();
+
+  // Relê tudo o que está guardado (por exemplo, depois de baixar os dados da conta) e redesenha.
+  function recarregar() {
+    estado.perfil = guarda.ler('perfil', {});
+    estado.padroes = guarda.ler('padroes', {});
+    estado.modelos = guarda.ler('modelos', []);
+    estado.uso = guarda.ler('uso', {});
+    estado.metricas = { receitas: 0, segundos: 0, semResultado: [], alteradas: {}, ...guarda.ler('metricas', {}) };
+    estado.locais = guarda.ler('locais', []);
+    estado.localAtual = guarda.ler('localAtual', '');
+    estado.diagnosticos = guarda.ler('diagnosticos', []);
+    renderPerfil();
+    renderLocalAtual();
+    renderModelos();
+    renderDiagnosticos();
+    renderSecoes();
+    renderAtalhos();
+    atualizarFolha();
+  }
+
+  // O que os outros arquivos (tour.js, conta.js) podem usar do app.
+  window.Pronto = { trocarAba, abrirLocais, avisar, guarda, recarregar, demo: Boolean(DEMO) };
 })();
