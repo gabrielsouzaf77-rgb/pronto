@@ -71,8 +71,9 @@
             <label class="entrada__aceite" hidden><input name="aceite" type="checkbox"> <span>Li e aceito os <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a> e a <a href="privacidade.html" target="_blank" rel="noopener">Política de privacidade</a>.</span></label>
             <p class="entrada__erro" id="entradaErro" role="alert"></p>
             <button class="btn btn--primario entrada__botao" type="submit">Entrar</button>
+            <button class="link entrada__esqueci" type="button" id="btnEsqueci">Esqueci a senha</button>
           </form>
-          <p class="entrada__nota">Dados de paciente nunca saem deste aparelho. Esqueceu a senha? Fale com quem te convidou para o Pronto.</p>
+          <p class="entrada__nota">Dados de paciente nunca saem deste aparelho.</p>
         </div>
       </div>`);
     $('#entradaSocial').addEventListener('click', (ev) => {
@@ -93,8 +94,10 @@
       form.elements.senha.autocomplete = modo === 'criar' ? 'new-password' : 'current-password';
       form.elements.senha.placeholder = modo === 'criar' ? 'Pelo menos 8 caracteres' : '';
       $('.entrada__botao').textContent = modo === 'criar' ? 'Criar conta e começar' : 'Entrar';
+      $('#btnEsqueci').hidden = modo === 'criar';
       $('#entradaErro').textContent = '';
     });
+    $('#btnEsqueci').addEventListener('click', () => esqueciSenha(form.elements.email.value.trim()));
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const email = form.elements.email.value.trim();
@@ -164,6 +167,18 @@
       ? 'A entrada foi cancelada. Tente de novo ou use o e-mail.'
       : 'Não foi possível entrar agora. Tente de novo ou use o e-mail.';
     history.replaceState(null, '', location.pathname);
+  }
+
+  // Manda o link de nova senha. Precisa do envio de e-mail do Supabase configurado (SMTP próprio).
+  async function esqueciSenha(email) {
+    const aviso = $('#entradaErro');
+    aviso.classList.remove('entrada__erro--ok');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { aviso.textContent = 'Digite seu e-mail acima e clique de novo em "Esqueci a senha".'; return; }
+    if (!sb) { aviso.textContent = 'Sem conexão com o Pronto agora. Confira a internet e tente de novo.'; return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    if (error) { aviso.textContent = 'Não conseguimos mandar o e-mail agora. Tente de novo em alguns minutos.'; return; }
+    aviso.classList.add('entrada__erro--ok');
+    aviso.textContent = `Se existir conta com ${email}, chegou um e-mail com o link para criar uma nova senha.`;
   }
 
   function fecharEntrada() {
@@ -237,7 +252,11 @@
 
   function textoDaSituacao(s) {
     if (!s) return '';
-    if (s.assinante) return s.assinatura === 'ativa' ? 'Assinante' : 'Assinante até o fim do período pago';
+    if (s.assinante) {
+      if (s.assinatura === 'ativa') return 'Assinante';
+      const ate = s.assinatura_ate ? new Date(s.assinatura_ate).toLocaleDateString('pt-BR') : '';
+      return ate ? `Assinatura cancelada · sem limite até ${ate}` : 'Assinatura cancelada · sem limite até o fim do período pago';
+    }
     if (s.boas_vindas_restantes > 0) return `${s.boas_vindas_restantes} de 10 grátis restantes`;
     return s.diario_restante > 0 ? '1 grátis disponível hoje' : 'Grátis de hoje já usado';
   }
@@ -296,7 +315,7 @@
           <ul class="plano__itens">
             <li>Receitas e prontuários sem limite</li>
             <li>Seus locais, modelos e diagnósticos em qualquer aparelho</li>
-            <li>Cancele quando quiser, direto no Mercado Pago</li>
+            <li>Cancele quando quiser, aqui mesmo no Pronto</li>
           </ul>
         </div>
         <p class="entrada__erro" id="assinarErro" role="alert"></p>
@@ -310,15 +329,50 @@
         <h2 id="dlgContaTitulo">Minha conta</h2>
         <p class="dlg__sub" id="contaEmail"></p>
         <p class="sair__resumo" id="contaPlano"></p>
+        <p class="entrada__erro" id="contaErro" role="alert"></p>
         <div class="dlg__acoes dlg__acoes--separadas">
           <button class="btn btn--perigo" type="button" id="btnContaSair">Sair da conta</button>
           <div class="dlg__acoes-dir">
-            <a class="btn" id="btnGerenciar" href="${GERENCIAR_MP}" target="_blank" rel="noopener" hidden>Gerenciar assinatura</a>
+            <button class="btn" type="button" id="btnCancelarAssinatura" hidden>Cancelar assinatura</button>
             <button class="btn btn--primario" type="button" id="btnContaAssinar">Assinar</button>
           </div>
         </div>
+        <p class="conta__rodape"><a href="${GERENCIAR_MP}" target="_blank" rel="noopener" id="lnkPagamentos" hidden>Pagamentos no Mercado Pago</a><button type="button" class="link conta__excluir" id="btnExcluirConta">Excluir minha conta</button></p>
+      </dialog>
+
+      <dialog class="dlg dlg--pequeno" id="dlgConfirmar" aria-labelledby="confirmarTitulo">
+        <h2 id="confirmarTitulo"></h2>
+        <p class="dlg__sub" id="confirmarTexto"></p>
+        <p class="entrada__erro" id="confirmarErro" role="alert"></p>
+        <div class="dlg__acoes">
+          <button class="btn" type="button" data-fechar>Voltar</button>
+          <button class="btn btn--apagar" type="button" id="btnConfirmar"></button>
+        </div>
+      </dialog>
+
+      <dialog class="dlg dlg--pequeno" id="dlgNovaSenha" aria-labelledby="novaSenhaTitulo">
+        <form id="formNovaSenha" novalidate>
+          <h2 id="novaSenhaTitulo">Crie uma nova senha</h2>
+          <p class="dlg__sub">Você entrou pelo link do e-mail. Escolha a senha que vai usar daqui para frente.</p>
+          <label class="cmp cmp--full"><span>Nova senha</span><input name="senha" type="password" autocomplete="new-password" minlength="8" placeholder="Pelo menos 8 caracteres" required></label>
+          <p class="entrada__erro" id="novaSenhaErro" role="alert"></p>
+          <div class="dlg__acoes"><button class="btn btn--primario" type="submit">Salvar senha</button></div>
+        </form>
       </dialog>`);
-    document.querySelectorAll('#dlgAssinar [data-fechar], #dlgConta [data-fechar]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
+    document.querySelectorAll('#dlgAssinar [data-fechar], #dlgConta [data-fechar], #dlgConfirmar [data-fechar]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
+    $('#btnCancelarAssinatura').addEventListener('click', () => confirmar({
+      titulo: 'Cancelar a assinatura?',
+      texto: 'Nenhuma nova cobrança será feita. Você continua sem limite até o fim do período já pago e, depois, volta ao grátis de 1 atendimento por dia.',
+      botao: 'Cancelar assinatura',
+      acao: cancelarAssinatura,
+    }));
+    $('#btnExcluirConta').addEventListener('click', () => confirmar({
+      titulo: 'Excluir sua conta?',
+      texto: 'Apaga para sempre sua conta, seus locais, modelos e atendimentos guardados por diagnóstico, e cancela a assinatura se houver. Não dá para desfazer.',
+      botao: 'Excluir para sempre',
+      acao: excluirConta,
+    }));
+    $('#formNovaSenha').addEventListener('submit', salvarNovaSenha);
     $('#btnAssinar').addEventListener('click', assinar);
     $('#btnContaAssinar').addEventListener('click', () => { $('#dlgConta').close(); abrirAssinatura(true); });
     $('#btnContaSair').addEventListener('click', sair);
@@ -366,11 +420,77 @@
     $('#contaEmail').textContent = usuario ? usuario.email : '';
     const s = situacao;
     $('#contaPlano').textContent = textoDaSituacao(s) || 'Carregando…';
-    const assinante = s && s.assinante;
-    $('#btnContaAssinar').hidden = Boolean(assinante);
-    $('#btnGerenciar').hidden = !s || s.assinatura === 'nenhuma';
+    $('#contaErro').textContent = '';
+    const botoes = () => {
+      const st = situacao || {};
+      $('#btnContaAssinar').hidden = st.assinatura === 'ativa';
+      $('#btnCancelarAssinatura').hidden = st.assinatura !== 'ativa';
+      $('#lnkPagamentos').hidden = !st.assinatura || st.assinatura === 'nenhuma';
+    };
+    botoes();
     $('#dlgConta').showModal();
-    atualizarSituacao().then(() => { $('#contaPlano').textContent = textoDaSituacao(situacao); });
+    atualizarSituacao().then(() => { $('#contaPlano').textContent = textoDaSituacao(situacao); botoes(); });
+  }
+
+  // Janela de confirmação para o que não tem volta (cancelar, excluir).
+  function confirmar({ titulo, texto, botao, acao }) {
+    $('#confirmarTitulo').textContent = titulo;
+    $('#confirmarTexto').textContent = texto;
+    $('#confirmarErro').textContent = '';
+    const b = $('#btnConfirmar');
+    b.textContent = botao;
+    b.onclick = async () => {
+      b.disabled = true;
+      try { await acao(); } finally { b.disabled = false; }
+    };
+    $('#dlgConfirmar').showModal();
+  }
+
+  async function erroDaFuncao(error, padrao) {
+    try { return (await error.context.json()).erro || padrao; } catch (e) { return padrao; }
+  }
+
+  async function cancelarAssinatura() {
+    const { error } = await sb.functions.invoke('cancelar-assinatura', { body: {} });
+    if (error) { $('#confirmarErro').textContent = await erroDaFuncao(error, 'Não foi possível cancelar agora. Tente de novo.'); return; }
+    $('#dlgConfirmar').close();
+    await atualizarSituacao();
+    $('#contaPlano').textContent = textoDaSituacao(situacao);
+    $('#btnCancelarAssinatura').hidden = true;
+    $('#btnContaAssinar').hidden = false;
+    P.avisar('Assinatura cancelada. Nenhuma nova cobrança será feita.');
+  }
+
+  async function excluirConta() {
+    const { error } = await sb.functions.invoke('excluir-conta', { body: {} });
+    if (error) { $('#confirmarErro').textContent = await erroDaFuncao(error, 'Não foi possível excluir agora. Tente de novo.'); return; }
+    pendentes.clear();
+    await sb.auth.signOut().catch(() => {});
+    apagarLocal();
+    try { sessionStorage.setItem('pronto.aviso', 'Sua conta foi excluída.'); } catch (e) { /* sem armazenamento */ }
+    location.replace(location.pathname);
+  }
+
+  function abrirNovaSenha() {
+    $('#novaSenhaErro').textContent = '';
+    if (!$('#dlgNovaSenha').open) $('#dlgNovaSenha').showModal();
+  }
+
+  async function salvarNovaSenha(ev) {
+    ev.preventDefault();
+    const senha = ev.target.elements.senha.value;
+    if (senha.length < 8) { $('#novaSenhaErro').textContent = 'A senha precisa ter pelo menos 8 caracteres.'; return; }
+    const { error } = await sb.auth.updateUser({ password: senha });
+    if (error) { $('#novaSenhaErro').textContent = 'Não foi possível salvar. Abra o link do e-mail de novo.'; return; }
+    $('#dlgNovaSenha').close();
+    P.avisar('Senha nova salva.');
+  }
+
+  // Pergunta ao Mercado Pago, pelo servidor, se a assinatura mudou (não depende só do aviso deles).
+  async function conferirAssinatura() {
+    if (!sb) return situacao;
+    await sb.functions.invoke('conferir-assinatura', { body: {} }).catch(() => {});
+    return atualizarSituacao();
   }
 
   async function sair() {
@@ -388,7 +508,7 @@
     P.avisar('Assim que o Mercado Pago confirmar o pagamento, sua assinatura aparece aqui.');
     let tentativas = 0;
     const conferir = async () => {
-      const s = await atualizarSituacao();
+      const s = await conferirAssinatura();
       if (s && s.assinante) return P.avisar('Assinatura confirmada. Bom plantão!');
       if (++tentativas < 6) setTimeout(conferir, 5000);
     };
@@ -410,6 +530,8 @@
     }
     await baixarDados();
     await atualizarSituacao();
+    // Assinatura em andamento: confere no Mercado Pago em segundo plano, caso algum aviso tenha se perdido.
+    if (situacao && ['pendente', 'ativa', 'pausada'].includes(situacao.assinatura)) conferirAssinatura();
     aoVoltarDoPagamento();
     if (tour()) tour().talvezIniciar();
   }
@@ -436,6 +558,8 @@
     // Fora do retorno do onAuthStateChange: chamar o Supabase lá dentro pode travar a biblioteca.
     sb.auth.onAuthStateChange((evento, sessao) => {
       if (sessao && sessao.user) setTimeout(() => aoEntrar(sessao.user), 0);
+      // Chegou pelo link de "Esqueci a senha": pede a senha nova.
+      if (evento === 'PASSWORD_RECOVERY') setTimeout(abrirNovaSenha, 0);
     });
     const { data } = await sb.auth.getSession();
     if (data.session) aoEntrar(data.session.user);

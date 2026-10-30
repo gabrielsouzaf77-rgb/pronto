@@ -1,0 +1,18 @@
+# O plano grátis do Supabase pausa o projeto depois de 7 dias sem uso, e aí ninguém entra no Pronto.
+# A cada 3 dias, uma consulta leve ao banco mantém o projeto acordado. A chave é a publicável
+# (a mesma que está no site), e a consulta não devolve nada por causa das regras de acesso.
+name: Manter o Supabase ativo
+
+on:
+  schedule:
+    - cron: '17 11 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  cutucar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consulta leve ao banco
+        run: |
+          curl -fsS "https://ukuzyoutntepdullrpzq.supabase.co/rest/v1/contas?select=id&limit=1" \
+            -H "apikey: sb_publishable_iFMLgzbr4OqmgEyZBPX_kA_APGDhkRp"

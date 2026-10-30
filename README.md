@@ -148,13 +148,28 @@ imprimir ou copiar de novo não gasta outro. Ele recomeça em "Nova receita",
 "Limpar prontuário" ou depois de 40 minutos.
 
 - **Supabase**, projeto `pronto` (ref `ukuzyoutntepdullrpzq`, São Paulo, plano
-  grátis). SQL em `supabase/migrations/`, funções em `supabase/functions/`.
+  grátis). SQL em `supabase/migrations/`, funções em `supabase/functions/`
+  (código comum em `_shared/mercadopago.ts`). O grátis só deixa 2 projetos
+  ativos por conta: em 30/10/2026 o `anuncios-de-barrio` foi pausado para o
+  Pronto voltar. O grátis também pausa depois de 7 dias sem uso; a rotina
+  `.github/workflows/manter-supabase-ativo.yml` consulta o banco a cada 3 dias.
+  Com clientes pagando, o certo é o plano Pro (US$ 25/mês, backup diário).
 - **Regra no servidor:** `consumir(atendimento)` registra e decide (10 de
   boas-vindas, 1 por dia no horário de Brasília, assinatura libera). O app não
-  consegue se marcar como assinante: `contas` só muda pelo webhook.
+  consegue se marcar como assinante: `contas` só muda pelas funções do servidor.
 - **Entrar:** e-mail e senha. A conta é criada pela função `cadastrar`, já
   confirmada, porque o e-mail padrão do Supabase só entrega para a equipe.
-  Ainda não há "esqueci a senha": precisa de SMTP próprio (ex.: Resend).
+  "Esqueci a senha" manda o link do Supabase e, na volta, pede a senha nova;
+  só funciona para todos depois do SMTP próprio (ex.: Resend no domínio).
+- **Minha conta:** situação do grátis ou da assinatura, "Cancelar assinatura"
+  (função `cancelar-assinatura`, o CDC pede cancelamento pelo mesmo canal; o
+  acesso segue até o fim do período pago) e "Excluir minha conta" (função
+  `excluir-conta`: cancela a assinatura e apaga tudo, LGPD).
+- **Pagamento confirmado sem depender do aviso:** `conferir-assinatura`
+  pergunta ao Mercado Pago na volta do pagamento e a cada abertura de quem tem
+  assinatura em andamento. O webhook continua sendo o caminho principal.
+- **Furo fechado:** quem abre o pagamento e cancela sem pagar não ganha o
+  "até o fim do período"; isso só vale para quem estava com assinatura ativa.
 - **Sincronização:** o app continua gravando no navegador; `conta.js` sobe cada
   gravação para a tabela `dados` e, ao entrar, baixa o que está na conta.
   Paciente não está em nenhuma chave sincronizada.
@@ -168,8 +183,9 @@ imprimir ou copiar de novo não gasta outro. Ele recomeça em "Nova receita",
 
 1. Na conta do Mercado Pago: Suas integrações → criar aplicação → copiar o
    **Access Token** (o de teste primeiro, depois o de produção).
-2. No Supabase: projeto `pronto` → Edge Functions → Secrets → criar
-   `MP_ACCESS_TOKEN` com esse token.
+2. Mandar o token no chat (o Claude grava na tabela `privado.config`, que só
+   as funções do servidor leem) ou criar o segredo `MP_ACCESS_TOKEN` em
+   Supabase → Edge Functions → Secrets. O segredo do ambiente vale primeiro.
 3. No Mercado Pago, na aplicação: Webhooks → URL
    `https://ukuzyoutntepdullrpzq.supabase.co/functions/v1/mp-webhook`, eventos
    de **Planos e assinaturas**. Copiar a assinatura secreta e criar o segredo
@@ -202,6 +218,38 @@ mesmo endereço e `http://localhost:4210/`.
   uma chave de Sign in with Apple e baixar o `.p8` (anotar Key ID e Team ID).
   No Supabase → Providers → Apple: Services ID e o segredo gerado a partir do
   `.p8`. Esse segredo vence a cada 6 meses e precisa ser gerado de novo.
+
+## Lançamento (30/10/2026)
+
+- **App instalável:** `manifest.webmanifest` e ícones `marca/icone-*.png`. No
+  celular, "Adicionar à tela inicial" abre o Pronto como app.
+- **Abre rápido e aguenta internet ruim:** `sw.js` guarda CSS, JS, fonte,
+  marca e a biblioteca do Supabase; a página vem da rede e, sem rede, da última
+  versão. Supabase nunca passa pelo cache. O `versionar.py` troca a versão do
+  cache junto com a do site. Não registra em `localhost`.
+- **Prévia do link:** `marca/og.png` (1200 x 630) e tags Open Graph, para o
+  link ir bonito no WhatsApp. Gerada por `ferramentas/gerar_imagens.py` a
+  partir de `ferramentas/og.html`.
+
+### Domínio próprio (pronto.med.br)
+
+O `.med.br` é da categoria "profissionais liberais, destinado a médicos"
+(Resolução CGI.br/RES/2008/008): sai no CPF do sócio médico, R$ 40/ano.
+Estava livre em 22/10/2026. Combinar por escrito que o domínio é do Pronto.
+
+1. Sócio registra `pronto.med.br` em registro.br e escolhe "usar os DNS do
+   Registro.br".
+2. No DNS: quatro registros `A` para `185.199.108.153`, `185.199.109.153`,
+   `185.199.110.153`, `185.199.111.153` e `CNAME` de `www` para
+   `gabrielsouzaf77-rgb.github.io`.
+3. `python ferramentas/trocar_dominio.py pronto.med.br`, publicar o site e a
+   função `assinar` de novo.
+4. GitHub → repositório `pronto` → Settings → Pages: domínio `pronto.med.br`
+   e "Enforce HTTPS".
+5. Supabase → Authentication → URL Configuration: Site URL e Redirect URLs
+   com `https://pronto.med.br/`. Google e Apple: trocar a origem também.
+6. E-mail: Resend com o domínio (registros TXT/MX que ele mostrar) e o SMTP do
+   Resend em Supabase → Authentication → SMTP. Isso libera "Esqueci a senha".
 
 ## Primeiro uso e medição
 

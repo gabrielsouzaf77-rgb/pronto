@@ -1055,6 +1055,11 @@ body[data-tab='prontuario'] .toast { bottom: calc(9.25rem + env(safe-area-inset-
 .entrada__erro:empty { display: none; }
 .entrada__botao { width: 100%; height: 2.875rem; font-size: 1rem; font-weight: 650; }
 .entrada__botao:disabled { opacity: 0.6; }
+.entrada__erro--ok { color: var(--azul-forte); }
+.entrada__esqueci { justify-self: center; font-size: 0.8125rem; font-weight: 500; }
+.conta__rodape { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--linha); font-size: 0.8125rem; }
+.conta__rodape a { color: var(--suave); }
+.conta__excluir { margin-left: auto; color: var(--alerta); font-weight: 500; }
 .entrada__nota { margin-top: 1.25rem; font-size: 0.75rem; line-height: 1.5; color: var(--apagado); text-align: center; text-wrap: balance; }
 
 .plano { margin-top: 1.25rem; padding: 1.125rem 1.125rem 1rem; border-radius: var(--raio); background: var(--campo); }

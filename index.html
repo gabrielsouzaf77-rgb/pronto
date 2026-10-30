@@ -4,14 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Pronto</title>
-  <meta name="description" content="Agiliza a redação da prescrição e do prontuário no plantão.">
+  <meta name="description" content="Receita e prontuário do plantão em segundos. Digite o remédio, escolha a dose e a receita já sai escrita, por cima de qualquer sistema da UPA.">
   <meta name="theme-color" content="#eef6fe">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Pronto">
+  <!-- Prévia do link no WhatsApp e nas redes. Trocar o endereço quando o domínio próprio entrar. -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="Pronto">
+  <meta property="og:title" content="Pronto · receita e prontuário do plantão em segundos">
+  <meta property="og:description" content="Digite o remédio, escolha a dose e a receita já sai escrita. 10 atendimentos grátis para começar.">
+  <meta property="og:url" content="https://gabrielsouzaf77-rgb.github.io/pronto/">
+  <meta property="og:image" content="https://gabrielsouzaf77-rgb.github.io/pronto/marca/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <!-- Versão de teste: fora dos buscadores. -->
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="marca/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="marca/favicon-32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="marca/apple-touch-icon.png">
-  <link rel="stylesheet" href="assets/styles.css?v=202610220114">
+  <link rel="stylesheet" href="assets/styles.css?v=202610301420">
 </head>
 <body class="entrando" data-tab="prescricao">
 
@@ -365,11 +379,15 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div id="impressao" aria-hidden="true"></div>
 
-  <script src="assets/dados-medicamentos.js?v=202610220114"></script>
-  <script src="assets/dados-prontuario.js?v=202610220114"></script>
-  <script src="assets/demo.js?v=202610220114"></script>
-  <script src="assets/app.js?v=202610220114"></script>
-  <script src="assets/tour.js?v=202610220114"></script>
-  <script src="assets/conta.js?v=202610220114"></script>
+  <script src="assets/dados-medicamentos.js?v=202610301420"></script>
+  <script src="assets/dados-prontuario.js?v=202610301420"></script>
+  <script src="assets/demo.js?v=202610301420"></script>
+  <script src="assets/app.js?v=202610301420"></script>
+  <script src="assets/tour.js?v=202610301420"></script>
+  <script src="assets/conta.js?v=202610301420"></script>
+  <script>
+    // App instalável e rápido no plantão (sw.js). Fora do servidor de teste local, para não guardar versões em desenvolvimento.
+    if ('serviceWorker' in navigator && !/^(localhost|127\.)/.test(location.hostname)) navigator.serviceWorker.register('sw.js');
+  </script>
 </body>
 </html>

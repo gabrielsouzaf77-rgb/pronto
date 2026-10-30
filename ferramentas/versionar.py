@@ -18,3 +18,9 @@ html = io.open(caminho, encoding='utf-8').read()
 novo, trocas = re.subn(r'((?:href|src)="assets/[^"?]+)(?:\?v=[^"]*)?"', rf'\1?v={versao}"', html)
 io.open(caminho, 'w', encoding='utf-8', newline='\n').write(novo)
 print(f'versão {versao} em {trocas} arquivos')
+
+# O service worker troca de cache junto, para o app instalado não ficar com a versão velha.
+sw = os.path.join(RAIZ, 'sw.js')
+codigo = io.open(sw, encoding='utf-8').read()
+io.open(sw, 'w', encoding='utf-8', newline='\n').write(re.sub(r"const VERSAO = '[^']*';", f"const VERSAO = '{versao}';", codigo))
+print('sw.js na mesma versão')
