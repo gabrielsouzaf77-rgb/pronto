@@ -9,11 +9,13 @@ chama `rx-plantao`; o repositório e o site já se chamam `pronto`.
 
 ## Como abrir
 
-- No computador: dê dois cliques em `index.html`.
+- `index.html` é a **vitrine** (a página de entrada, onde o médico conhece o
+  Pronto e cria a conta). `app.html` é o **sistema**. Quem já entrou neste
+  aparelho vai direto da vitrine para o sistema; `?vitrine` força a vitrine.
 - Pelo Claude Code: pré-visualização `rx-plantao` (porta 4210).
 
-Não há instalação, servidor ou banco de dados. São arquivos estáticos; para
-publicar, basta subir a pasta em qualquer hospedagem de site estático.
+São arquivos estáticos (sem build); a conta e a assinatura usam o Supabase
+(seção "Contas e assinatura").
 
 ## O que faz
 
@@ -152,7 +154,10 @@ imprimir ou copiar de novo não gasta outro. Ele recomeça em "Nova receita",
   (código comum em `_shared/mercadopago.ts`). O grátis só deixa 2 projetos
   ativos por conta: em 30/10/2026 o `anuncios-de-barrio` foi pausado para o
   Pronto voltar. O grátis também pausa depois de 7 dias sem uso; a rotina
-  `.github/workflows/manter-supabase-ativo.yml` consulta o banco a cada 3 dias.
+  `.github/workflows/manter-supabase-ativo.yml` grava um batimento no banco
+  todo dia (função `batimento()`). A versão anterior, que só consultava a cada
+  3 dias, não impediu a pausa: entre 4 e 7/11/2026 o Supabase pausou todos os
+  projetos grátis da conta e o login ficou fora do ar até 16/11.
   Com clientes pagando, o certo é o plano Pro (US$ 25/mês, backup diário).
 - **Regra no servidor:** `consumir(atendimento)` registra e decide (10 de
   boas-vindas, 1 por dia no horário de Brasília, assinatura libera). O app não
@@ -218,6 +223,36 @@ mesmo endereço e `http://localhost:4210/`.
   uma chave de Sign in with Apple e baixar o `.p8` (anotar Key ID e Team ID).
   No Supabase → Providers → Apple: Services ID e o segredo gerado a partir do
   `.p8`. Esse segredo vence a cada 6 meses e precisa ser gerado de novo.
+
+## Vitrine (16/11/2026)
+
+`index.html` + `assets/site.css` + `assets/site.js`. Pedido do Gabriel: "a
+página mais bonita, interativa e dinâmica possível", onde o médico conhece o
+Pronto e cria a conta. Referências escolhidas por ele num painel de 10 páginas
+reais: **Mercury** e **Attio**, claro, o produto como estrela. Feita com a skill
+taste-skill (direção "o produto em ação", topo trocado pelo da Mercury por
+causa da escolha dele); inspetor com 0 falhas em 1440, 768 e 390 px.
+
+- **Topo:** "Digite o remédio. A receita sai pronta.", cadastro por e-mail ali
+  mesmo e o **Pronto funcionando** sobre a foto de uma cidade ao amanhecer (a
+  hora em que o plantão acaba). A demonstração usa a base real
+  (`dados-medicamentos.js`): escreve receitas sozinha e, ao primeiro toque,
+  passa para o visitante, com busca tolerante a erro, teclado e tempo medido.
+- **Uma noite de plantão:** quadro de atendimentos de exemplo (texto igual ao
+  que o Pronto escreve), uma linha aberta por vez.
+- **Como funciona:** três passos com a tela fixa mudando; no celular cada passo
+  leva a sua tela.
+- **O resto do plantão:** faixas com interruptores (prontuário, modelo do
+  hospital, por diagnóstico, 2 vias, privacidade).
+- **A farmácia da UPA:** os 37 nomes da base, com fotos reais de UPA.
+- **Preço** (tabela; blocos no celular), **perguntas** e **cadastro** no fim.
+- O e-mail digitado vai para `app.html#criar` pela memória da aba (nunca no
+  endereço) e o sistema abre na aba "Criar conta" já preenchida.
+- **Fotos** em `assets/fotos/` (créditos no rodapé e em `creditos.json`):
+  amanhecer (Diego Torres Silvestre, CC BY 2.0), gavetas e ampola de UPA
+  (TCEMG, CC BY 2.0), SAMU (Guilhermerrrr, CC BY 4.0). Trocar pelas fotos
+  próprias quando houver.
+- Os tempos e casos do quadro e o "UPA 24h Centro" são exemplos.
 
 ## Lançamento (30/10/2026)
 
@@ -304,7 +339,10 @@ escassez ou hábito forçado: não cabem numa ferramenta médica.
 
 | Arquivo | Conteúdo |
 |---|---|
-| `index.html` | Estrutura da página |
+| `index.html` | Vitrine (página de entrada e cadastro) |
+| `app.html` | O sistema (antes era o `index.html`) |
+| `assets/site.css`, `assets/site.js` | Visual e interações da vitrine |
+| `assets/fotos/` | Fotos da vitrine, com créditos |
 | `assets/styles.css` | Visual, celular e impressão |
 | `assets/app.js` | Busca, itens, folha, modelos e prontuário |
 | `assets/tour.js` | Tour de boas-vindas |

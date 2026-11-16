@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
       reason: 'Pronto · assinatura mensal',
       external_reference: user.id,
       payer_email: user.email,
-      back_url: `${SITE}?assinatura=voltou`,
+      back_url: `${SITE}app.html?assinatura=voltou`,
       status: 'pending',
       auto_recurring: { frequency: 1, frequency_type: 'months', transaction_amount: PRECO, currency_id: 'BRL' },
     }),

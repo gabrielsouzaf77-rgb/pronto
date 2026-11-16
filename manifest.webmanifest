@@ -3,7 +3,7 @@
   "short_name": "Pronto",
   "description": "Receita e prontuário do plantão em segundos, por cima de qualquer sistema da UPA.",
   "lang": "pt-BR",
-  "start_url": "./",
+  "start_url": "app.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f4f9fe",

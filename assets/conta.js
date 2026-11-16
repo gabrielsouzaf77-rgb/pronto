@@ -98,6 +98,18 @@
       $('#entradaErro').textContent = '';
     });
     $('#btnEsqueci').addEventListener('click', () => esqueciSenha(form.elements.email.value.trim()));
+
+    // Veio da vitrine (index.html) por "Criar conta": abre na aba certa, com o e-mail que ele já digitou.
+    if (location.hash === '#criar') {
+      $('.entrada__abas [data-modo="criar"]').click();
+      try {
+        const email = sessionStorage.getItem('pronto.cadastro');
+        if (email) form.elements.email.value = email;
+        sessionStorage.removeItem('pronto.cadastro');
+      } catch (e) { /* sem armazenamento de sessão */ }
+      history.replaceState(null, '', location.pathname + location.search);
+      setTimeout(() => (form.elements.email.value ? form.elements.senha : form.elements.email).focus(), 300);
+    }
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const email = form.elements.email.value.trim();

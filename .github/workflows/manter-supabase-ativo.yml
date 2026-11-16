@@ -1,18 +1,20 @@
-# O plano grátis do Supabase pausa o projeto depois de 7 dias sem uso, e aí ninguém entra no Pronto.
-# A cada 3 dias, uma consulta leve ao banco mantém o projeto acordado. A chave é a publicável
-# (a mesma que está no site), e a consulta não devolve nada por causa das regras de acesso.
+# O plano grátis do Supabase pausa o projeto depois de uns dias sem uso, e aí ninguém entra no Pronto.
+# A consulta leve a cada 3 dias não bastou (pausou em novembro de 2026): agora roda todo dia e grava
+# um "batimento" no banco pela função batimento(), que só guarda a hora e apaga os de mais de 30 dias.
+# A chave é a publicável, a mesma que está no site. Com o plano Pro, esta rotina pode ser desligada.
 name: Manter o Supabase ativo
 
 on:
   schedule:
-    - cron: '17 11 */3 * *'
+    - cron: '17 11 * * *'
   workflow_dispatch:
 
 jobs:
   cutucar:
     runs-on: ubuntu-latest
     steps:
-      - name: Consulta leve ao banco
+      - name: Grava o batimento no banco
         run: |
-          curl -fsS "https://ukuzyoutntepdullrpzq.supabase.co/rest/v1/contas?select=id&limit=1" \
-            -H "apikey: sb_publishable_iFMLgzbr4OqmgEyZBPX_kA_APGDhkRp"
+          curl -fsS -X POST "https://ukuzyoutntepdullrpzq.supabase.co/rest/v1/rpc/batimento" \
+            -H "apikey: sb_publishable_iFMLgzbr4OqmgEyZBPX_kA_APGDhkRp" \
+            -H "Content-Type: application/json" -d '{}'

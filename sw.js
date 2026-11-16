@@ -6,9 +6,9 @@
   - Supabase (conta, dados, uso grátis): nunca passa pelo cache.
   VERSAO é trocada pelo ferramentas/versionar.py a cada publicação; o cache antigo é apagado.
 */
-const VERSAO = '202610301420';
+const VERSAO = '202611161818';
 const CACHE = `pronto-${VERSAO}`;
-const BASE = ['./', 'manifest.webmanifest', 'marca/favicon.svg', 'marca/pronto-logo.svg', 'assets/fontes/outfit-600.woff2'];
+const BASE = ['./', 'app.html', 'manifest.webmanifest', 'marca/favicon.svg', 'marca/pronto-logo.svg', 'assets/fontes/outfit-600.woff2'];
 
 self.addEventListener('install', (ev) => {
   ev.waitUntil(caches.open(CACHE).then((c) => c.addAll(BASE)).then(() => self.skipWaiting()));
@@ -32,13 +32,16 @@ self.addEventListener('fetch', (ev) => {
     ev.respondWith(
       fetch(req)
         .then((r) => {
-          if (r.ok && url.origin === self.location.origin && url.pathname.endsWith('/')) {
+          // Guarda a última versão de cada página (vitrine e sistema) para abrir sem rede.
+          if (r.ok && url.origin === self.location.origin) {
             const copia = r.clone();
-            caches.open(CACHE).then((c) => c.put('./', copia));
+            caches.open(CACHE).then((c) => c.put(url.pathname, copia));
           }
           return r;
         })
-        .catch(() => caches.match(req).then((r) => r || caches.match('./'))),
+        .catch(async () => (await caches.match(url.pathname, { ignoreSearch: true }))
+          || (await caches.match('app.html', { ignoreSearch: true }))
+          || caches.match('./')),
     );
     return;
   }
