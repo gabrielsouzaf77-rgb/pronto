@@ -20,6 +20,8 @@
   /* Entrada do topo                                                   */
   /* ---------------------------------------------------------------- */
   requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.add('pronto')));
+  // Garantia: se o navegador segurar os quadros (aba em segundo plano), o topo aparece mesmo assim.
+  setTimeout(() => document.documentElement.classList.add('pronto'), 1500);
 
   /* ---------------------------------------------------------------- */
   /* Demonstração: busca pelo nome, escolhe a apresentação e a posologia */
