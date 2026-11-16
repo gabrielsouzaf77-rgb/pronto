@@ -236,7 +236,8 @@ desenhado em HTML simples) foi reprovada como "fraquíssima". A **v2** troca
 tudo pelo produto real:
 
 - **Imagens = o Pronto de verdade**, capturado em alta resolução por
-  `ferramentas/capturar_telas.cjs` (Puppeteer no `app.html?demo`):
+  `ferramentas/capturar_telas.cjs` (Puppeteer no `app.html?demo`, cada tela numa unidade: `&local=1..3`) e
+  `ferramentas/telas_webp.py` (converte para .webp):
   `assets/telas/tela-receita`, `-prontuario`, `-diagnostico`, `-impressa`
   (a A4) e `-celular`. Ao mudar o visual do app, rodar de novo.
 - **Topo:** fundo claro com brilho azul e grade de pontos, título central,
@@ -346,6 +347,8 @@ escassez ou hábito forçado: não cabem numa ferramenta médica.
 | `assets/site.css`, `assets/site.js` | Visual e interações da vitrine |
 | `assets/telas/` | Capturas reais do Pronto usadas na vitrine |
 | `assets/styles.css` | Visual, celular e impressão |
+| `assets/visual.css` | Visual de 16/11: cinza-claro, cartões brancos, trilho preto, cartão do plantão, prévia da A4 |
+| `assets/painel.js` | Cartões em volta da folha (boas-vindas, receitas do dia, relógio da receita) e a prévia de como sai |
 | `assets/app.js` | Busca, itens, folha, modelos e prontuário |
 | `assets/tour.js` | Tour de boas-vindas |
 | `assets/conta.js` | Entrada, sincronização, uso grátis e assinatura |

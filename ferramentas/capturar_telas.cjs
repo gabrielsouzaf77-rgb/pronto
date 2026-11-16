@@ -1,11 +1,14 @@
 // Fotografa o Pronto de verdade (app.html?demo) em alta resolução para a vitrine.
 // Precisa do servidor local (pré-visualização rx-plantao, porta 4210).
 // Uso: PPT=<caminho do puppeteer-core> CHROME=<chrome.exe> node ferramentas/capturar_telas.cjs
+// Depois: python ferramentas/telas_webp.py (converte para .webp e recorta o "Por diagnóstico").
+// Cada tela abre numa unidade diferente da demonstração (?local=1, 2, 3).
 const puppeteer = require(process.env.PPT);
 const path = require('path');
 const fs = require('fs');
 
 const BASE = process.env.BASE || 'http://localhost:4210/app.html?demo';
+const NA = (n) => `${BASE}&local=${n}`;
 const SAIDA = path.join(__dirname, '..', 'assets', 'telas');
 fs.mkdirSync(SAIDA, { recursive: true });
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -18,8 +21,8 @@ async function montar(p) {
     if (pront) pront.guarda.gravar('tourVisto', true);
     document.querySelector('.tour')?.remove();
     const campo = (sel, v) => { const el = document.querySelector(sel); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
-    campo('#pacNome', 'Ana Beatriz Souza');
-    campo('#pacIdade', '28 anos');
+    campo('#pacNome', 'Mariana Costa');
+    campo('#pacIdade', '34 anos');
     const sexo = document.querySelector('#pacSexo');
     sexo.value = [...sexo.options].find((o) => /fem/i.test(o.textContent))?.value || sexo.options[1].value;
     sexo.dispatchEvent(new Event('input', { bubbles: true }));
@@ -35,16 +38,32 @@ async function montar(p) {
 
   // 1 e 2: computador, receita e prontuário
   const p = await b.newPage();
-  await p.setViewport({ width: 1200, height: 900, deviceScaleFactor: 2 });
-  await p.goto(BASE, { waitUntil: 'networkidle0' });
+  await p.setViewport({ width: 1440, height: 1080, deviceScaleFactor: 2 });
+  await p.goto(NA(1), { waitUntil: 'networkidle0' });
   await espera(1500);
   await montar(p);
   await p.evaluate(() => window.scrollTo(0, 0));
   await espera(400);
-  await p.screenshot({ path: path.join(SAIDA, 'receita.png'), clip: { x: 0, y: 0, width: 1200, height: 900 } });
-  await p.evaluate(() => { document.querySelector('#tabbtn-prontuario').click(); window.scrollTo(0, 0); });
+  await p.screenshot({ path: path.join(SAIDA, 'receita.png') });
+  // O cartão "Por diagnóstico" sozinho, com o atendimento de ITU guardado.
+  const lateral = await p.$('#lateral');
+  if (lateral) await lateral.screenshot({ path: path.join(SAIDA, 'diagnostico.png') });
+
+  // Prontuário em outra unidade, com algumas frases já marcadas.
+  const q = await b.newPage();
+  await q.setViewport({ width: 1440, height: 1080, deviceScaleFactor: 2 });
+  await q.goto(NA(2), { waitUntil: 'networkidle0' });
+  await espera(1500);
+  await montar(q);
+  await q.evaluate(() => {
+    document.querySelector('#tabbtn-prontuario').click();
+    document.querySelectorAll('#secoes .sec').forEach((sec) => sec.querySelectorAll('.chip').forEach((c, i) => { if (i < 2) c.click(); }));
+    window.scrollTo(0, 0);
+    document.querySelector('#toast')?.classList.remove('toast--on');
+  });
   await espera(900);
-  await p.screenshot({ path: path.join(SAIDA, 'prontuario.png'), clip: { x: 0, y: 0, width: 1200, height: 900 } });
+  await q.screenshot({ path: path.join(SAIDA, 'prontuario.png') });
+  await q.close();
 
   // 3: a receita impressa (o que sai da impressora)
   await p.evaluate(() => {
@@ -63,7 +82,7 @@ async function montar(p) {
   // 4: celular
   const c = await b.newPage();
   await c.setViewport({ width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
-  await c.goto(BASE, { waitUntil: 'networkidle0' });
+  await c.goto(NA(3), { waitUntil: 'networkidle0' });
   await espera(1500);
   await montar(c);
   await c.evaluate(() => window.scrollTo(0, 0));

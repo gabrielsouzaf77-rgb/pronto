@@ -374,7 +374,7 @@
             return `
             <li class="rx__item${it.uid === novoUid ? ' rx__item--novo' : ''}" data-uid="${it.uid}">
               <div class="rx__linha">
-                <span class="rx__n">${++n}.</span>
+                <span class="rx__n">${String(++n).padStart(2, '0')}</span>
                 <span class="rx__nome">${esc(med.nome)} <span class="rx__conc">${esc(ap.conc)}</span></span>
                 <span class="rx__forma">${esc(ap.forma)}</span>
                 <input class="rx__qtd" type="text" value="${esc(it.qtd)}" size="${Math.max(8, it.qtd.length + 1)}" aria-label="Quantidade de ${esc(med.nome)}">
@@ -625,6 +625,11 @@
     const m = estado.metricas;
     m.receitas += 1;
     m.segundos += seg;
+    estado.ultimoTempo = seg;
+    // Contagem por dia (só números) para o cartão do plantão; guarda as duas últimas semanas.
+    const hoje = new Date().toLocaleDateString('sv');
+    m.dias = { ...(m.dias || {}), [hoje]: ((m.dias || {})[hoje] || 0) + 1 };
+    Object.keys(m.dias).sort().slice(0, -14).forEach((d) => delete m.dias[d]);
     // Posologia reescrita à mão indica que o padrão da base não é o que o médico usa.
     estado.itens.filter(textoFoiAlterado).forEach((it) => {
       const { med, ap } = POR_AP.get(it.apId);
@@ -2180,5 +2185,12 @@
   }
 
   // O que os outros arquivos (tour.js, conta.js) podem usar do app.
-  window.Pronto = { trocarAba, abrirLocais, avisar, guarda, recarregar, demo: Boolean(DEMO) };
+  window.Pronto = {
+    trocarAba, abrirLocais, avisar, guarda, recarregar, demo: Boolean(DEMO),
+    // Para o painel (painel.js): cartões ao redor da folha e a prévia da A4.
+    get estado() { return estado; },
+    unidade, temAntimicrobiano, folhaParaImprimir, textoDoProntuario, abrirPerfil, abrirUnidade, abrirLateral,
+    abrirResumo: () => $('#btnResumo').click(),
+  };
+  document.dispatchEvent(new Event('pronto:pronto'));
 })();

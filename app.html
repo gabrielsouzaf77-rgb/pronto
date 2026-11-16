@@ -25,9 +25,31 @@
   <link rel="icon" href="marca/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="marca/favicon-32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="marca/apple-touch-icon.png">
-  <link rel="stylesheet" href="assets/styles.css?v=202611161848">
+  <link rel="stylesheet" href="assets/styles.css?v=202611161937">
+  <link rel="stylesheet" href="assets/visual.css?v=202611161937">
 </head>
 <body class="entrando" data-tab="prescricao">
+
+  <div class="casca">
+  <!-- Trilho: atalhos fixos à esquerda na tela larga -->
+  <nav class="trilho" aria-label="Atalhos">
+    <img class="trilho__marca" src="marca/favicon.svg" alt="pronto." width="40" height="40">
+    <button type="button" class="trilho__btn" data-ir-aba="prescricao" title="Prescrição" aria-label="Prescrição">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7l4.5 4.5v12.5H7z"/><path d="M14 3.5V8h4.5M10 12.5h5M10 16h5"/></svg>
+    </button>
+    <button type="button" class="trilho__btn" data-ir-aba="prontuario" title="Prontuário" aria-label="Prontuário">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="4.5" width="13" height="16" rx="2"/><path d="M9.5 4.5V3h5v1.5M9 10h6M9 13.5h6M9 17h3.5"/></svg>
+    </button>
+    <button type="button" class="trilho__btn" data-abrir-locais title="Locais de atendimento" aria-label="Locais de atendimento">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/></svg>
+    </button>
+    <button type="button" class="trilho__btn" data-trilho="resumo" title="Resumo de uso" aria-label="Resumo de uso">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19.5V11M10 19.5V5M15 19.5v-6M20 19.5V8"/></svg>
+    </button>
+    <button type="button" class="trilho__btn trilho__btn--fim" data-trilho="perfil" title="Meus dados" aria-label="Meus dados">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></svg>
+    </button>
+  </nav>
 
   <header class="top">
     <div class="brand">
@@ -68,6 +90,10 @@
   </header>
 
   <main>
+    <div class="coluna">
+    <!-- Boas-vindas e o plantão em números (painel.js) -->
+    <section class="cartao ola" id="ola" aria-live="polite"></section>
+    <section class="plantao" id="plantao" aria-label="Receitas no plantão"></section>
     <!-- Por diagnóstico: os atendimentos do próprio médico, para reaproveitar receita e prontuário -->
     <aside class="lateral" id="lateral" aria-label="Por diagnóstico">
       <div class="lateral__cab">
@@ -86,6 +112,7 @@
       <button type="button" class="mais" id="btnGuardarDiag" hidden>Guardar este atendimento</button>
       <p class="lateral__nota">Aqui só aparecem atendimentos feitos por você neste aparelho. O Pronto não sugere tratamento.</p>
     </aside>
+    </div>
     <!-- ===================== PRESCRIÇÃO: a própria receita é a tela ===================== -->
     <section class="work" id="tab-prescricao" role="tabpanel" aria-labelledby="tabbtn-prescricao">
       <button type="button" class="local-atual" data-abrir-locais>
@@ -104,7 +131,7 @@
         <header class="folha__cab" id="folhaCab"></header>
 
         <div class="folha__pac">
-          <label class="cmp cmp--nome"><span>Paciente</span><input type="text" id="pacNome" autocomplete="off" placeholder="Nome completo"></label>
+          <label class="cmp cmp--nome"><span>Paciente</span><input type="text" id="pacNome" autocomplete="off" placeholder="Nome do paciente"></label>
           <label class="cmp"><span>Idade</span><input type="text" id="pacIdade" autocomplete="off" placeholder="34 anos"></label>
           <label class="cmp"><span>Sexo</span>
             <select id="pacSexo">
@@ -202,6 +229,17 @@
       <p class="aviso">As frases só entram quando você clica. Registre apenas o que foi perguntado e examinado.</p>
     </section>
   </main>
+
+  <!-- À direita: o tempo da receita e a folha como vai sair (painel.js) -->
+  <aside class="previa" id="previa" aria-label="Prévia">
+    <section class="cartao relogio" id="relogio"></section>
+    <section class="cartao previa__folha">
+      <div class="previa__cab"><h2 id="previaTitulo">Como vai sair</h2><span id="previaTipo">A4</span></div>
+      <div class="previa__palco" id="previaPalco"><div class="previa__a4" id="previaA4"></div></div>
+      <pre class="previa__texto" id="previaTexto" hidden></pre>
+    </section>
+  </aside>
+  </div>
   <div class="veu-lateral" id="veuLateral" aria-hidden="true"></div>
 
   <dialog class="dlg" id="dlgPerfil" aria-labelledby="dlgPerfilTitulo">
@@ -379,12 +417,13 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div id="impressao" aria-hidden="true"></div>
 
-  <script src="assets/dados-medicamentos.js?v=202611161848"></script>
-  <script src="assets/dados-prontuario.js?v=202611161848"></script>
-  <script src="assets/demo.js?v=202611161848"></script>
-  <script src="assets/app.js?v=202611161848"></script>
-  <script src="assets/tour.js?v=202611161848"></script>
-  <script src="assets/conta.js?v=202611161848"></script>
+  <script src="assets/dados-medicamentos.js?v=202611161937"></script>
+  <script src="assets/dados-prontuario.js?v=202611161937"></script>
+  <script src="assets/demo.js?v=202611161937"></script>
+  <script src="assets/app.js?v=202611161937"></script>
+  <script src="assets/painel.js?v=202611161937"></script>
+  <script src="assets/tour.js?v=202611161937"></script>
+  <script src="assets/conta.js?v=202611161937"></script>
   <script>
     // App instalável e rápido no plantão (sw.js). Fora do servidor de teste local, para não guardar versões em desenvolvimento.
     if ('serviceWorker' in navigator && !/^(localhost|127\.)/.test(location.hostname)) navigator.serviceWorker.register('sw.js');

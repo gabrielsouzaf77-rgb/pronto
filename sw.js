@@ -6,7 +6,7 @@
   - Supabase (conta, dados, uso grátis): nunca passa pelo cache.
   VERSAO é trocada pelo ferramentas/versionar.py a cada publicação; o cache antigo é apagado.
 */
-const VERSAO = '202611161848';
+const VERSAO = '202611161937';
 const CACHE = `pronto-${VERSAO}`;
 const BASE = ['./', 'app.html', 'manifest.webmanifest', 'marca/favicon.svg', 'marca/pronto-logo.svg', 'assets/fontes/outfit-600.woff2'];
 

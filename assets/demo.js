@@ -166,15 +166,25 @@
     'ciclobenzaprina-5': 11, 'amoxicilina-500': 5, 'dipirona-1g': 4, 'paracetamol-750': 6, 'ciprofloxacino-500': 2,
   };
 
+  // Receitas por dia nos 7 dias de uso (a última é hoje): soma 61, como o total.
+  const diasDaSemana = {};
+  [7, 9, 6, 11, 8, 12, 8].forEach((n, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    diasDaSemana[d.toLocaleDateString('sv')] = n;
+  });
+
   window.RX_DEMO = {
     dados: {
       perfil: { nome: 'Dra. Helena Prado', crm: '000000', uf: 'MG', especialidade: 'Clínica médica' },
       locais: [
-        { id: LOCAL_UPA, nome: 'UPA 24h Jardim das Flores', endereco: 'Av. das Acácias, 1200', cidade: 'Belo Horizonte', telefone: '', timbre: '', campos, geo: null },
-        { id: LOCAL_PA, nome: 'Pronto Atendimento Central', endereco: 'Rua Principal, 45', cidade: 'Contagem', telefone: '', timbre: '', campos, geo: null },
+        { id: LOCAL_UPA, nome: 'Hospital Municipal São Lucas', endereco: 'Av. Brasil, 1500 · Centro', cidade: 'Belo Horizonte', telefone: '', timbre: '', campos, geo: null },
+        { id: LOCAL_PA, nome: 'Pronto Atendimento Santa Rita', endereco: 'Rua das Laranjeiras, 45', cidade: 'Contagem', telefone: '', timbre: '', campos, geo: null },
+        { id: LOCAL_UPA + '-3', nome: 'UPA 24h Vila Nova', endereco: 'Rua Itapecerica, 300', cidade: 'Betim', telefone: '', timbre: '', campos, geo: null },
       ],
-      localAtual: LOCAL_UPA,
-      metricas: { receitas: 61, segundos: 61 * 47, semResultado: ['bamifilina', 'buscopan composto gotas'], alteradas: {} },
+      // ?demo&local=2 ou 3 abre em outra unidade (para as capturas da vitrine variarem).
+      localAtual: [LOCAL_UPA, LOCAL_PA, LOCAL_UPA + '-3'][Math.max(0, Math.min(2, Number(new URLSearchParams(location.search).get('local') || 1) - 1))],
+      metricas: { receitas: 61, segundos: 61 * 47, semResultado: ['bamifilina', 'buscopan composto gotas'], alteradas: {}, dias: diasDaSemana },
       uso,
       modelos: [],
       padroes: {},

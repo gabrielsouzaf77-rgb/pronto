@@ -1,0 +1,276 @@
+/* Visual de 16/11/2026: cinza-claro, cartões brancos bem arredondados, trilho preto e um cartão preto
+   de destaque. Nome do paciente e remédios grandes, com espaço. Carrega depois de styles.css e só
+   troca aparência e disposição; o comportamento continua em app.js e painel.js. */
+
+:root {
+  --fundo: #eceef2;
+  --fundo-topo: #eceef2;
+  --campo: #f3f4f6;
+  --campo-forte: #e9ebef;
+  --tinta: #0e1116;
+  --suave: #5d6573;
+  --apagado: #9aa1ad;
+  --linha: #e8eaee;
+  --azul: #1f6fe5;
+  --azul-forte: #1659c4;
+  --azul-claro: #eaf2ff;
+  --azul-medio: #c4dafc;
+  --preto: #111318;
+  --raio: 0.75rem;
+  --raio-cartao: 1.5rem;
+}
+
+body { background: var(--fundo); }
+
+.cartao { padding: 1.375rem; border-radius: var(--raio-cartao); background: var(--papel); }
+
+/* ---------------- Topo: abas em pílula preta, botões brancos ---------------- */
+.top::before { background: rgba(236, 238, 242, 0.82); }
+.tabs { padding: 0.3125rem; border-radius: 1rem; background: var(--papel); }
+.tabs::before { top: 0.3125rem; bottom: 0.3125rem; left: 0.3125rem; width: calc(50% - 0.3125rem); border-radius: 0.75rem; background: var(--preto); box-shadow: none; }
+.tabs__btn { padding: 0.5rem 1.25rem; font-size: 0.9375rem; font-weight: 500; }
+.tabs__btn[aria-selected='true'] { color: #fff; }
+
+.btn { height: 2.75rem; padding: 0 1.125rem; border-radius: 0.875rem; background: var(--papel); font-size: 0.9375rem; font-weight: 600; }
+.btn:hover { background: #f6f7f9; }
+.btn--primario { background: var(--azul); box-shadow: none; }
+.btn--primario:hover { background: var(--azul-forte); }
+.btn--icone { width: 2.75rem; }
+.dlg .btn { background: var(--campo); }
+.dlg .btn:hover { background: var(--campo-forte); }
+.dlg .btn--primario, .dlg .btn--primario:hover { background: var(--azul); }
+.menu__lista { border-radius: 1rem; }
+.menu__lista button:hover, .menu__lista button:focus-visible { background: var(--preto); }
+
+/* ---------------- Folha ---------------- */
+.folha { border-radius: var(--raio-cartao); box-shadow: none; padding: 2.25rem 2.5rem 2rem; }
+.local-atual, .abre-lateral { padding: 0.5rem 0.875rem 0.5rem 0.6875rem; background: var(--papel); }
+.local-atual:hover, .abre-lateral:hover { background: #f6f7f9; }
+.local-atual--vazio { background: var(--azul-claro); }
+
+/* Paciente: o nome grande, como título; idade, sexo e endereço numa linha embaixo. */
+.folha__pac { grid-template-columns: 8rem 10.5rem minmax(0, 1fr); gap: 0.75rem 0.875rem; padding-bottom: 1.75rem; border-bottom: 1px solid var(--linha); }
+.cmp--nome { grid-column: 1 / -1; gap: 0.25rem; }
+.cmp--nome > span, .rotulo, .via__nome { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--suave); }
+.cmp--nome input {
+  height: auto;
+  padding: 0.125rem 0;
+  border-radius: 0;
+  background: transparent;
+  font: 600 2.5rem/1.15 var(--fonte-titulo);
+  letter-spacing: -0.025em;
+}
+.cmp--nome input:hover { background: transparent; }
+.cmp--nome input:focus { background: transparent; box-shadow: 0 2px 0 var(--azul); }
+.cmp--nome input::placeholder { color: #c4c9d1; }
+.folha__pac > .mais { grid-column: auto; align-self: end; height: 2.625rem; }
+.cmp--end { grid-column: 3 / -1; }
+
+.folha__corpo { gap: 1.75rem; padding-top: 1.75rem; }
+.via__nome { margin-bottom: 0.375rem; }
+
+/* Remédios: número discreto, nome em destaque, posologia com respiro. */
+.rx__item { padding: 1.125rem 0; }
+.rx__linha { gap: 0.625rem; }
+.rx__n { width: 2.25rem; font: 600 0.9375rem var(--fonte-titulo); color: #a8aeb8; letter-spacing: 0.02em; }
+.rx__nome, .rx__conc { font: 600 1.375rem/1.25 var(--fonte-titulo); letter-spacing: -0.015em; }
+.rx__forma { font-size: 0.875rem; }
+.rx__qtd { font: 600 0.9375rem var(--fonte-titulo); }
+input.rx__qtd { font: 600 0.9375rem var(--fonte-titulo); }
+.rx__uso { width: calc(100% - 2.875rem); margin-left: 2.875rem; font-size: 1rem; color: #3b4250; }
+.rx__opcoes { margin-left: 2.875rem; }
+.rx__mover button:hover:not(:disabled) { background: var(--campo); }
+
+/* Onde o próximo remédio entra. */
+.compor__campo { height: 3.5rem; border-radius: 1rem; background: var(--papel); box-shadow: inset 0 0 0 1.5px #dfe3e8; }
+.compor__campo:hover { background: var(--papel); box-shadow: inset 0 0 0 1.5px #cdd3db; }
+.compor__campo:focus-within { box-shadow: inset 0 0 0 1.5px var(--azul), 0 0 0 5px var(--azul-claro); }
+.busca__campo input, .busca__fantasma { font-size: 1.125rem; }
+.atalho { padding: 0.5rem 0.875rem; border-radius: 0.75rem; background: var(--papel); box-shadow: inset 0 0 0 1px var(--linha); font-size: 0.875rem; font-weight: 500; }
+.atalho:hover { box-shadow: inset 0 0 0 1px var(--azul-medio); }
+.chip { border-radius: 0.625rem; }
+.chip--on, .chip--on:hover { background: var(--preto); }
+.pop { border-radius: 1.125rem; }
+.res--sel, .dose--sel, .res:hover, .dose:hover { background: var(--campo); }
+
+.atb { align-self: stretch; padding: 0.75rem 1rem; border-radius: 0.875rem; background: #fff4ec; color: #a4501c; font-weight: 600; }
+.folha__corpo > .atb::before { content: ''; display: inline-block; width: 0.5rem; height: 0.5rem; margin-right: 0.625rem; border-radius: 50%; background: #e0782c; vertical-align: 0.0625rem; }
+
+/* ---------------- Coluna da esquerda ---------------- */
+.ola__titulo { font: 600 1.625rem/1.15 var(--fonte-titulo); letter-spacing: -0.02em; }
+.ola__sub { margin-top: 0.375rem; font-size: 0.875rem; color: var(--suave); }
+.ola__link { margin-top: 0.5rem; padding: 0; border: 0; background: none; font-weight: 600; color: var(--azul); }
+
+/* O cartão preto: as receitas do dia e a semana. */
+.plantao { padding: 1.375rem; border-radius: var(--raio-cartao); background: var(--preto); color: #fff; }
+.plantao__rotulo { font-size: 0.8125rem; color: #9aa1ad; }
+.plantao__numero { display: flex; align-items: baseline; gap: 0.625rem; margin-top: 0.375rem; font: 600 3.5rem/1 var(--fonte-titulo); letter-spacing: -0.04em; }
+.plantao__numero span { font: 500 0.875rem var(--fonte); letter-spacing: 0; color: #9aa1ad; }
+.plantao__barras { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4375rem; height: 5rem; margin-top: 1.125rem; }
+.plantao__dia { display: grid; grid-template-rows: 1fr auto; gap: 0.375rem; }
+.plantao__dia i { align-self: end; display: block; border-radius: 0.4375rem; background: #2a2e37; transition: height 0.6s var(--mola); }
+.plantao__dia--hoje i { background: var(--azul); }
+.plantao__dia span { font-size: 0.6875rem; text-align: center; color: #6b7280; }
+.plantao__dia--hoje span { color: #fff; font-weight: 600; }
+.plantao__media { margin-top: 1rem; padding-top: 0.875rem; border-top: 1px solid #262a33; font-size: 0.8125rem; color: #9aa1ad; }
+.plantao__media strong { float: right; color: #fff; font-weight: 600; }
+
+.lateral { border-radius: var(--raio-cartao); box-shadow: none; padding: 1.375rem; }
+.lateral__titulo { font-size: 1.125rem; }
+.lateral__busca { background: var(--campo); }
+.diag--atual, .diag--atual:hover { background: var(--campo); }
+.diag--atual .diag__usar strong { color: var(--azul); }
+
+/* ---------------- Trilho preto ---------------- */
+.trilho { display: none; }
+.trilho__marca { width: 2.5rem; height: 2.5rem; margin-bottom: 1.25rem; border-radius: 0.75rem; }
+.trilho__btn { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 0; border-radius: 0.875rem; background: none; color: #8b93a1; transition: background-color 0.15s, color 0.15s; }
+.trilho__btn svg { width: 1.3125rem; height: 1.3125rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.trilho__btn:hover { background: #1f232b; color: #fff; }
+.trilho__btn--on, .trilho__btn--on:hover { background: #fff; color: var(--preto); }
+.trilho__btn--fim { margin-top: auto; }
+
+/* ---------------- Prévia (direita) ---------------- */
+.previa { display: none; }
+.relogio { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.relogio__rotulo { font-size: 0.8125rem; color: var(--suave); }
+.relogio__valor { margin-top: 0.25rem; font: 600 2.5rem/1 var(--fonte-titulo); letter-spacing: -0.035em; }
+.relogio__valor--texto { font-size: 1.125rem; letter-spacing: -0.01em; }
+.relogio__vias { flex: none; padding: 0.4375rem 0.75rem; border-radius: 0.75rem; background: var(--campo); font-size: 0.875rem; font-weight: 600; }
+.relogio__vias--atb { background: #fff4ec; color: #a4501c; }
+
+.previa__folha { display: flex; flex-direction: column; gap: 0.875rem; padding: 1.125rem; }
+.previa__cab { display: flex; justify-content: space-between; align-items: baseline; }
+.previa__cab h2 { font: 600 1rem var(--fonte-titulo); }
+.previa__cab span { font-size: 0.8125rem; color: var(--suave); }
+.previa__palco { position: relative; overflow: hidden; border-radius: 0.625rem; background: #fff; box-shadow: 0 0 0 1px var(--linha), 0 18px 40px -24px rgba(15, 20, 30, 0.4); }
+.previa__a4 .folha {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 794px;
+  min-height: 1123px;
+  padding: 60px 68px 56px;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+  transform-origin: 0 0;
+}
+.previa__a4 .folha__tipo, .previa__a4 .via__nome { color: var(--tinta); }
+.previa__a4 p.rx__uso { width: auto; margin-left: 2rem; padding: 0; }
+.previa__a4 p.rx__orienta { width: auto; margin: 0; padding: 0; }
+.previa__a4 .rx__n { width: 1.5rem; font: inherit; color: var(--apagado); }
+.previa__a4 .rx__nome, .previa__a4 .rx__conc { font: 650 1.0625rem var(--fonte); letter-spacing: -0.012em; }
+.previa__a4 .rx__qtd { font: 550 0.875rem var(--fonte); }
+.previa__a4 .atb { align-self: flex-start; background: none; box-shadow: inset 0 0 0 1px var(--alerta); color: var(--alerta); }
+.previa__a4 .atb::before { display: none; }
+.previa__a4 [data-abrir-painel] { cursor: pointer; border-radius: 6px; transition: background-color 0.15s; }
+.previa__a4 [data-abrir-painel]:hover { background: var(--azul-claro); }
+.previa__a4 .falta { font-size: 1.25rem; }
+.previa__vazia { padding: 2rem 0; font-size: 1.125rem; color: var(--apagado); }
+.previa__texto { margin: 0; padding: 1rem; max-height: 60vh; overflow: auto; border-radius: 0.75rem; background: var(--campo); font: 0.8125rem/1.55 var(--fonte); white-space: pre-wrap; color: #2b3240; }
+
+/* ---------------- Disposição ---------------- */
+
+/* Até 64rem: folha no centro, como antes; o painel não aparece. */
+@media (max-width: 63.99rem) {
+  .coluna { display: contents; }
+  .ola, .plantao { display: none; }
+}
+
+/* A partir de 64rem: trilho, coluna da esquerda e a folha. */
+@media (min-width: 64rem) {
+  .casca {
+    display: grid;
+    grid-template-columns: 4.75rem 17.5rem minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    gap: 1rem;
+    max-width: 104rem;
+    margin: 0 auto;
+    padding: 1rem;
+    align-items: start;
+  }
+  .casca > main { display: contents; }
+  .trilho {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    position: sticky;
+    top: 1rem;
+    height: calc(100dvh - 2rem);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.125rem 0;
+    border-radius: var(--raio-cartao);
+    background: var(--preto);
+  }
+  .coluna {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100dvh - 2rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 0;
+  }
+  .coluna .lateral { position: static; flex: 1 1 auto; min-height: 12rem; max-height: none; margin: 0; }
+  .top {
+    grid-column: 3;
+    grid-row: 1;
+    top: 0;
+    display: flex;
+    height: auto;
+    padding: 0;
+    box-shadow: none;
+  }
+  .rolou .top { box-shadow: none; }
+  .top::before { inset: -1rem -0.5rem -0.75rem; background: var(--fundo); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .brand { display: none; }
+  .top__dir { margin-left: auto; }
+  .casca .work { grid-column: 3; grid-row: 2; width: 100%; margin: 0; padding: 0 0 3rem; }
+  .demo-faixa { position: relative; z-index: 31; }
+}
+
+/* A partir de 80rem: a prévia da folha à direita, e o editor perde cabeçalho e assinatura (estão na prévia). */
+@media (min-width: 80rem) {
+  .casca { grid-template-columns: 4.75rem 17.5rem minmax(0, 1fr) 20.5rem; }
+  .previa {
+    grid-column: 4;
+    grid-row: 1 / 3;
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100dvh - 2rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .casca #folhaCab, .casca #folhaRodape { display: none; }
+  .folha { min-height: calc(100dvh - 7.5rem); }
+}
+
+/* Celular */
+@media (max-width: 45rem) {
+  .folha { padding: 1.5rem 1.25rem 1.375rem; }
+  .folha__pac { grid-template-columns: 1fr 1fr; }
+  .folha__pac > .mais { grid-column: 1 / -1; height: auto; }
+  .cmp--end { grid-column: 1 / -1; }
+  .cmp--nome input { font-size: 1.875rem; }
+  .rx__nome, .rx__conc { font-size: 1.1875rem; }
+  .rx__n { width: 1.75rem; }
+  .rx__nome { flex: 1 1 calc(100% - 2.5rem); }
+  .rx__forma { margin-left: 2.375rem; }
+  .rx__uso { width: calc(100% - 2.375rem); margin-left: 2.375rem; }
+  .rx__opcoes { margin-left: 2.375rem; }
+  .acoes { border-radius: 1.25rem; }
+  .acoes .btn { border-radius: 0.875rem; }
+  .acoes .btn:not(.btn--primario) { background: var(--campo); }
+}
+
+@media print {
+  .casca { display: none !important; }
+}
