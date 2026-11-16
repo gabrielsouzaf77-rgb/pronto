@@ -228,31 +228,33 @@ mesmo endereço e `http://localhost:4210/`.
 
 `index.html` + `assets/site.css` + `assets/site.js`. Pedido do Gabriel: "a
 página mais bonita, interativa e dinâmica possível", onde o médico conhece o
-Pronto e cria a conta. Referências escolhidas por ele num painel de 10 páginas
-reais: **Mercury** e **Attio**, claro, o produto como estrela. Feita com a skill
-taste-skill (direção "o produto em ação", topo trocado pelo da Mercury por
-causa da escolha dele); inspetor com 0 falhas em 1440, 768 e 390 px.
+Pronto e cria a conta. Referências escolhidas por ele: **Mercury** e **Attio**,
+claro, o produto como estrela.
 
-- **Topo:** "Digite o remédio. A receita sai pronta.", cadastro por e-mail ali
-  mesmo e o **Pronto funcionando** sobre a foto de uma cidade ao amanhecer (a
-  hora em que o plantão acaba). A demonstração usa a base real
-  (`dados-medicamentos.js`): escreve receitas sozinha e, ao primeiro toque,
-  passa para o visitante, com busca tolerante a erro, teclado e tempo medido.
-- **Uma noite de plantão:** quadro de atendimentos de exemplo (texto igual ao
-  que o Pronto escreve), uma linha aberta por vez.
-- **Como funciona:** três passos com a tela fixa mudando; no celular cada passo
-  leva a sua tela.
-- **O resto do plantão:** faixas com interruptores (prontuário, modelo do
-  hospital, por diagnóstico, 2 vias, privacidade).
-- **A farmácia da UPA:** os 37 nomes da base, com fotos reais de UPA.
-- **Preço** (tabela; blocos no celular), **perguntas** e **cadastro** no fim.
-- O e-mail digitado vai para `app.html#criar` pela memória da aba (nunca no
-  endereço) e o sistema abre na aba "Criar conta" já preenchida.
-- **Fotos** em `assets/fotos/` (créditos no rodapé e em `creditos.json`):
-  amanhecer (Diego Torres Silvestre, CC BY 2.0), gavetas e ampola de UPA
-  (TCEMG, CC BY 2.0), SAMU (Guilhermerrrr, CC BY 4.0). Trocar pelas fotos
-  próprias quando houver.
-- Os tempos e casos do quadro e o "UPA 24h Centro" são exemplos.
+A **v1** (fotos de acervo, cidade ao amanhecer com legenda poética, produto
+desenhado em HTML simples) foi reprovada como "fraquíssima". A **v2** troca
+tudo pelo produto real:
+
+- **Imagens = o Pronto de verdade**, capturado em alta resolução por
+  `ferramentas/capturar_telas.cjs` (Puppeteer no `app.html?demo`):
+  `assets/telas/tela-receita`, `-prontuario`, `-diagnostico`, `-impressa`
+  (a A4) e `-celular`. Ao mudar o visual do app, rodar de novo.
+- **Topo:** fundo claro com brilho azul e grade de pontos, título central,
+  cadastro por e-mail e uma cena 3D: a janela do app endireita com a rolagem,
+  a receita A4 sai de lado, o celular sobe e os selos flutuam
+  (GSAP + ScrollTrigger, rolagem suave com Lenis, todos por CDN fixado).
+- **A frase que acende** palavra por palavra com a rolagem.
+- **Recursos:** a lista fica presa e a tela muda (receita, prontuário, por
+  diagnóstico, celular); no celular cada item leva a sua tela.
+- **Teste agora:** seção escura com a demonstração ao vivo (base real,
+  digita sozinha até o visitante tocar).
+- **Bento:** cartões com pedaços do produto (colar no sistema da UPA, duas
+  vias, paciente que some, modelo do hospital, ícone do app, esteira com os
+  37 remédios).
+- **Planos** em cartões, **perguntas** e **cadastro** final com o app
+  inclinado. O e-mail vai para `app.html#criar` pela memória da aba.
+- `ferramentas/fotografar_vitrine.cjs` fotografa a página em várias alturas
+  da rolagem (computador e celular) para conferir as animações.
 
 ## Lançamento (30/10/2026)
 
@@ -342,7 +344,7 @@ escassez ou hábito forçado: não cabem numa ferramenta médica.
 | `index.html` | Vitrine (página de entrada e cadastro) |
 | `app.html` | O sistema (antes era o `index.html`) |
 | `assets/site.css`, `assets/site.js` | Visual e interações da vitrine |
-| `assets/fotos/` | Fotos da vitrine, com créditos |
+| `assets/telas/` | Capturas reais do Pronto usadas na vitrine |
 | `assets/styles.css` | Visual, celular e impressão |
 | `assets/app.js` | Busca, itens, folha, modelos e prontuário |
 | `assets/tour.js` | Tour de boas-vindas |

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Pronto · receita e prontuário do plantão em segundos</title>
   <meta name="description" content="Digite o remédio, escolha a dose e a receita sai pronta. Receita e prontuário do plantão em segundos, por cima do sistema de qualquer UPA. 10 atendimentos grátis.">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#f5f9ff">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="marca/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="marca/favicon-32.png" sizes="32x32" type="image/png">
@@ -22,8 +22,8 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <script>
-    // Quem já tem conta neste aparelho vai direto para o sistema; links antigos (?demo, volta do pagamento) também.
     document.documentElement.classList.add('js');
+    // Quem já tem conta neste aparelho vai direto para o sistema; links antigos (?demo, volta do pagamento) também.
     (function () {
       var q = location.search;
       if (/[?&](demo|assinatura)\b/.test(q)) return location.replace('app.html' + q);
@@ -32,13 +32,15 @@
     })();
   </script>
   <link rel="preload" href="./assets/fontes/outfit-600.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/site.css?v=202611161824">
+  <link rel="preload" href="./assets/telas/tela-receita.webp" as="image">
+  <link rel="stylesheet" href="assets/site.css?v=202611161848">
 </head>
 <body>
-  <header class="nav">
+  <header class="nav" data-nav>
     <a class="nav__marca" href="./" aria-label="Pronto, início"><img src="marca/pronto-logo.svg" alt="pronto." width="96" height="32"></a>
     <nav class="nav__links" aria-label="Seções">
-      <a href="#como">Como funciona</a>
+      <a href="#recursos">Recursos</a>
+      <a href="#teste">Testar agora</a>
       <a href="#preco">Preço</a>
       <a href="#perguntas">Perguntas</a>
     </nav>
@@ -49,218 +51,201 @@
   </header>
 
   <main>
-    <!-- 1. Topo: o que é, o cadastro e o Pronto funcionando sobre o amanhecer do fim do plantão -->
-    <section class="topo" aria-labelledby="titulo">
-      <div class="topo__texto">
-        <h1 class="topo__titulo" id="titulo"><span class="linha"><span>Digite o remédio.</span></span> <span class="linha"><span>A receita sai pronta.</span></span></h1>
-        <p class="topo__frase">Receita e prontuário do plantão em segundos, por cima do sistema de qualquer UPA. Você escolhe o remédio e a dose; o Pronto escreve no formato certo, para imprimir ou colar.</p>
+    <!-- 1. Topo: o que é, o cadastro e o Pronto de verdade numa cena que endireita com a rolagem -->
+    <section class="hero" aria-labelledby="titulo">
+      <div class="hero__luz" aria-hidden="true"></div>
+      <div class="hero__texto">
+        <h1 class="hero__titulo" id="titulo"><span class="linha"><span>Digite o remédio.</span></span> <span class="linha"><span>A receita sai pronta.</span></span></h1>
+        <p class="hero__frase">Receita e prontuário do plantão em segundos, por cima do sistema de qualquer UPA. Você escolhe o remédio e a dose; o Pronto escreve no formato certo.</p>
         <form class="cadastro" data-cadastro novalidate>
           <label class="sr" for="email-topo">Seu e-mail</label>
           <input id="email-topo" name="email" type="email" inputmode="email" autocomplete="email" placeholder="seu@email.com" required>
           <button class="botao" type="submit">Criar conta grátis</button>
-          <p class="cadastro__nota" data-cadastro-nota>10 atendimentos grátis para começar. Sem cartão de crédito.</p>
+          <p class="cadastro__nota" data-cadastro-nota><span>10 atendimentos grátis</span><span>Sem cartão de crédito</span><span>Funciona em qualquer UPA</span></p>
         </form>
       </div>
 
-      <div class="palco" data-palco>
-        <div class="palco__fundo">
-          <img class="palco__foto" src="assets/fotos/amanhecer.jpg?v=202611161824" alt="Cidade vista do alto ao amanhecer, com as luzes ainda acesas e o céu laranja no horizonte" width="1920" height="1200" fetchpriority="high">
-        </div>
-
-        <!-- O Pronto de verdade, em miniatura: busca na base real, escolhe a dose, escreve a linha. -->
-        <div class="demo" data-ui data-demo>
-          <div class="demo__cab">
-            <div>
-              <p class="demo__unidade">UPA 24h Centro</p>
-              <p class="demo__local">Av. Principal, 1200 · Plantão noturno</p>
-            </div>
-            <p class="demo__tipo" data-demo-tipo>Receituário</p>
-          </div>
-          <div class="demo__paciente"><span>Paciente</span><strong>Paciente do leito 4</strong><span>Idade</span><strong>34 anos</strong></div>
-
-          <div class="demo__corpo">
-            <p class="demo__via" data-demo-via hidden>Uso oral</p>
-            <ol class="demo__itens" data-demo-itens></ol>
-
-            <div class="demo__busca">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-              <label class="sr" for="demo-busca">Experimente: digite um remédio</label>
-              <input id="demo-busca" type="text" autocomplete="off" spellcheck="false" placeholder="Adicionar medicamento" data-demo-busca role="combobox" aria-expanded="false" aria-controls="demo-lista" aria-autocomplete="list">
-              <span class="demo__etapa" data-demo-etapa></span>
-            </div>
-            <ul class="demo__lista" id="demo-lista" role="listbox" data-demo-lista hidden></ul>
-          </div>
-
-          <div class="demo__pe">
-            <p class="demo__tempo" data-demo-tempo aria-live="polite">Experimente: clique na busca e digite um remédio.</p>
-            <div class="demo__acoes">
-              <button type="button" class="demo__btn" data-demo-limpar>Limpar</button>
-              <a class="demo__btn demo__btn--azul" href="#cadastro" data-ir-cadastro>Imprimir</a>
-            </div>
-          </div>
+      <div class="cena" data-cena>
+        <div class="cena__palco" data-cena-palco>
+          <figure class="janela" data-janela>
+            <div class="janela__barra" aria-hidden="true"><i></i><i></i><i></i><span>pronto · receituário</span></div>
+            <img src="assets/telas/tela-receita.webp?v=202611161848" alt="O Pronto com uma receita montada: nitrofurantoína e dipirona para infecção urinária, com a barra Por diagnóstico ao lado" width="2400" height="1800" fetchpriority="high">
+          </figure>
+          <figure class="a4" data-a4>
+            <img src="assets/telas/tela-impressa.webp?v=202611161848" alt="A mesma receita impressa em A4, com a assinatura da médica" width="1200" height="1691" loading="lazy">
+          </figure>
+          <figure class="celular" data-celular>
+            <img src="assets/telas/tela-celular.webp?v=202611161848" alt="O Pronto no celular com a mesma receita" width="780" height="1688" loading="lazy">
+          </figure>
+          <p class="selo selo--tempo" data-selo><b></b>Receita pronta em 0:09</p>
+          <p class="selo selo--vias" data-selo>Antimicrobiano · 2 vias</p>
+          <p class="selo selo--copia" data-selo>Copiada para o sistema da UPA</p>
         </div>
       </div>
-      <p class="topo__legenda">Amanhecer: a hora em que o plantão acaba.</p>
     </section>
 
-    <!-- 2. Uma noite de plantão: o quadro dos atendimentos -->
-    <section class="noite" aria-labelledby="noite-titulo">
-      <div class="noite__abre">
-        <div class="noite__texto">
-          <h2 id="noite-titulo">Uma noite inteira de receitas.</h2>
-          <p>Cada paciente, uma receita, com alguém esperando na sua frente. No Pronto, cada uma leva o tempo de escolher o remédio e a dose. E a do caso igual de ontem volta com um clique.</p>
-        </div>
-        <img class="noite__foto" src="assets/fotos/samu-noite.jpg?v=202611161824" alt="Ambulância do SAMU estacionada à noite sob a cobertura de uma base" width="1600" height="1199" loading="lazy">
-      </div>
-
-      <div class="quadro" data-ui data-quadro role="list" aria-label="Exemplo de atendimentos de um plantão">
-        <div class="quadro__linha" role="listitem"><button type="button" aria-expanded="false"><span class="q-hora">19:12</span><span class="q-caso">Síndrome gripal</span><span class="q-rx">Dipirona 500 mg · Loratadina 10 mg</span><span class="q-tempo">8 s</span><span class="q-status q-status--copiada">Copiada</span></button>
-          <div class="quadro__detalhe"><div><p>1. Dipirona 500 mg, comprimido · 10 comprimidos. Tomar 1 comprimido de 6 em 6 horas se dor ou febre.</p><p>2. Loratadina 10 mg, comprimido · 7 comprimidos. Tomar 1 comprimido 1 vez ao dia por 7 dias.</p></div></div></div>
-        <div class="quadro__linha" role="listitem"><button type="button" aria-expanded="false"><span class="q-hora">20:40</span><span class="q-caso">Lombalgia mecânica</span><span class="q-rx">Ibuprofeno 600 mg · Ciclobenzaprina 5 mg</span><span class="q-tempo">11 s</span><span class="q-status">Impressa</span></button>
-          <div class="quadro__detalhe"><div><p>1. Ibuprofeno 600 mg, comprimido · 15 comprimidos. Tomar 1 comprimido de 8 em 8 horas, após as refeições, por 5 dias.</p><p>2. Ciclobenzaprina 5 mg, comprimido · 7 comprimidos. Tomar 1 comprimido à noite por 7 dias.</p></div></div></div>
-        <div class="quadro__linha" role="listitem"><button type="button" aria-expanded="false"><span class="q-hora">21:05</span><span class="q-caso">Gastroenterite aguda</span><span class="q-rx">Sais de reidratação · Ondansetrona 4 mg</span><span class="q-tempo">9 s</span><span class="q-status">Impressa</span></button>
-          <div class="quadro__detalhe"><div><p>1. Sais para reidratação oral, envelope · 6 envelopes. Dissolver 1 envelope em 1 litro de água filtrada ou fervida e tomar aos poucos ao longo do dia, principalmente após cada evacuação ou vômito.</p><p>2. Ondansetrona 4 mg, comprimido orodispersível · 10 comprimidos. Dissolver 1 comprimido sobre a língua de 8 em 8 horas se náusea ou vômito.</p></div></div></div>
-        <div class="quadro__linha quadro__linha--aberta" role="listitem"><button type="button" aria-expanded="true"><span class="q-hora">22:14</span><span class="q-caso">ITU baixa não complicada</span><span class="q-rx">Nitrofurantoína 100 mg · Dipirona 500 mg</span><span class="q-tempo">10 s</span><span class="q-status q-status--vias">2 vias</span></button>
-          <div class="quadro__detalhe"><div><p>1. Nitrofurantoína 100 mg, cápsula · 20 cápsulas. Tomar 1 cápsula de 6 em 6 horas, junto com alimento, por 5 dias.</p><p>2. Dipirona 500 mg, comprimido · 10 comprimidos. Tomar 1 comprimido de 6 em 6 horas se dor ou febre. Antimicrobiano: saiu em duas vias, válida por 10 dias.</p></div></div></div>
-        <div class="quadro__linha" role="listitem"><button type="button" aria-expanded="false"><span class="q-hora">23:30</span><span class="q-caso">Faringoamigdalite</span><span class="q-rx">Amoxicilina 500 mg · Ibuprofeno 600 mg</span><span class="q-tempo">12 s</span><span class="q-status q-status--vias">2 vias</span></button>
-          <div class="quadro__detalhe"><div><p>1. Amoxicilina 500 mg, cápsula · 21 cápsulas. Tomar 1 cápsula de 8 em 8 horas por 7 dias.</p><p>2. Ibuprofeno 600 mg, comprimido · 15 comprimidos. Tomar 1 comprimido de 8 em 8 horas, após as refeições, por 5 dias.</p></div></div></div>
-        <div class="quadro__linha" role="listitem"><button type="button" aria-expanded="false"><span class="q-hora">00:52</span><span class="q-caso">Cefaleia tensional</span><span class="q-rx">Dipirona 1 g</span><span class="q-tempo">6 s</span><span class="q-status q-status--copiada">Copiada</span></button>
-          <div class="quadro__detalhe"><div><p>1. Dipirona 1 g, comprimido · 10 comprimidos. Tomar 1 comprimido de 6 em 6 horas se dor ou febre.</p></div></div></div>
-        <div class="quadro__linha" role="listitem"><button type="button" aria-expanded="false"><span class="q-hora">02:17</span><span class="q-caso">Crise de rinite</span><span class="q-rx">Loratadina 10 mg · Soro fisiológico nasal</span><span class="q-tempo">9 s</span><span class="q-status">Impressa</span></button>
-          <div class="quadro__detalhe"><div><p>1. Loratadina 10 mg, comprimido · 7 comprimidos. Tomar 1 comprimido 1 vez ao dia por 7 dias.</p><p>2. Cloreto de sódio 0,9%, solução nasal · 1 frasco. Aplicar em cada narina de 4 a 6 vezes ao dia.</p></div></div></div>
-        <div class="quadro__linha" role="listitem"><button type="button" aria-expanded="false"><span class="q-hora">04:40</span><span class="q-caso">Pielonefrite aguda</span><span class="q-rx">Ciprofloxacino 500 mg · Ondansetrona 4 mg</span><span class="q-tempo">13 s</span><span class="q-status q-status--vias">2 vias</span></button>
-          <div class="quadro__detalhe"><div><p>1. Ciprofloxacino 500 mg, comprimido · 14 comprimidos. Tomar 1 comprimido de 12 em 12 horas por 7 dias.</p><p>2. Ondansetrona 4 mg, comprimido orodispersível · 10 comprimidos. Dissolver 1 comprimido sobre a língua de 8 em 8 horas se náusea ou vômito.</p></div></div></div>
-        <div class="quadro__linha" role="listitem"><button type="button" aria-expanded="false"><span class="q-hora">06:05</span><span class="q-caso">Síndrome gripal</span><span class="q-rx">A mesma de 19:12, com um clique</span><span class="q-tempo">3 s</span><span class="q-status q-status--copiada">Copiada</span></button>
-          <div class="quadro__detalhe"><div><p>Pelo "Por diagnóstico": a receita e o prontuário do último caso de síndrome gripal voltam prontos para ajustar.</p></div></div></div>
-      </div>
-      <p class="noite__nota">Exemplo de um plantão. Os tempos são do momento em que o remédio é digitado até a receita sair.</p>
+    <!-- 2. A dor, numa frase que acende com a rolagem -->
+    <section class="dor" aria-labelledby="dor-titulo">
+      <h2 class="sr" id="dor-titulo">Por que o Pronto existe</h2>
+      <p class="dor__frase" data-acende>O paciente na sua frente. A fila lá fora. E você escrevendo, de novo, a mesma dipirona de 6 em 6 horas. O Pronto escreve. Você atende.</p>
     </section>
 
-    <!-- 3. Como funciona: a tela fica parada e muda a cada passo -->
-    <section class="como" id="como" aria-labelledby="como-titulo">
-      <div class="como__passos">
-        <h2 id="como-titulo">Três passos, um paciente.</h2>
-        <div class="passo passo--ativo" data-passo="0">
-          <h3>Digite o remédio.</h3>
-          <p>Três letras bastam, e erro de digitação também: "amoxicilna" encontra a amoxicilina. O que você mais usa aparece primeiro.</p>
-        </div>
-        <div class="passo" data-passo="1">
-          <h3>Escolha a dose.</h3>
-          <p>As apresentações da farmácia da UPA, cada uma com a posologia de referência já escrita. Você confere, ajusta o que quiser e salva como seu padrão.</p>
-        </div>
-        <div class="passo" data-passo="2">
-          <h3>Imprima ou cole.</h3>
-          <p>Sai em A4 com seu nome e CRM, em duas vias quando tem antibiótico. Ou vai copiada, pronta para colar no sistema da unidade.</p>
+    <!-- 3. Recursos: a lista fica e a tela muda -->
+    <section class="recursos" id="recursos" aria-labelledby="recursos-titulo">
+      <h2 class="recursos__titulo" id="recursos-titulo">Tudo o que o plantão pede, numa tela só.</h2>
+      <div class="recursos__corpo" data-recursos>
+        <ol class="recursos__lista">
+          <li class="recurso recurso--ativo" data-recurso="0">
+            <h3>Receita em segundos</h3>
+            <p>Três letras e a busca acha o remédio, até com erro de digitação. Escolha a apresentação e a dose: a linha sai escrita, com a quantidade certa e o "Uso oral" no lugar.</p>
+            <img class="recurso__tela" src="assets/telas/tela-receita.webp?v=202611161848" alt="" width="2400" height="1800" loading="lazy">
+          </li>
+          <li class="recurso" data-recurso="1">
+            <h3>Prontuário por clique</h3>
+            <p>Escolha a queixa e clique nas frases. Cada seção tem seu Copiar, para os sistemas com um campo para cada parte, e um botão copia tudo de uma vez.</p>
+            <img class="recurso__tela" src="assets/telas/tela-prontuario.webp?v=202611161848" alt="" width="2400" height="1800" loading="lazy">
+          </li>
+          <li class="recurso" data-recurso="2">
+            <h3>O caso de ontem, de volta</h3>
+            <p>Cada atendimento finalizado fica guardado pelo diagnóstico. Na próxima ITU, um clique traz a receita e o prontuário que você escreveu, prontos para ajustar.</p>
+            <img class="recurso__tela" src="assets/telas/tela-diagnostico.webp?v=202611161848" alt="" width="420" height="470" loading="lazy">
+          </li>
+          <li class="recurso" data-recurso="3">
+            <h3>No bolso do jaleco</h3>
+            <p>Abre no computador da UPA e no seu celular, e instala na tela inicial como um aplicativo. Seus modelos e locais vão junto, na sua conta.</p>
+            <img class="recurso__tela" src="assets/telas/tela-celular.webp?v=202611161848" alt="" width="780" height="1688" loading="lazy">
+          </li>
+        </ol>
+        <div class="recursos__palco" data-recursos-palco aria-hidden="true">
+          <figure class="recursos__quadro recursos__quadro--0 recursos__quadro--on"><img src="assets/telas/tela-receita.webp?v=202611161848" alt="" width="2400" height="1800" loading="lazy"></figure>
+          <figure class="recursos__quadro recursos__quadro--1"><img src="assets/telas/tela-prontuario.webp?v=202611161848" alt="" width="2400" height="1800" loading="lazy"></figure>
+          <figure class="recursos__quadro recursos__quadro--2"><img src="assets/telas/tela-diagnostico.webp?v=202611161848" alt="" width="420" height="470" loading="lazy"></figure>
+          <figure class="recursos__quadro recursos__quadro--3"><img src="assets/telas/tela-celular.webp?v=202611161848" alt="" width="780" height="1688" loading="lazy"></figure>
         </div>
       </div>
-      <div class="como__palco">
-        <div class="tela" data-ui data-tela="0" aria-hidden="true">
-          <div class="tela__estado tela__estado--0">
-            <div class="tela__busca"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><span>amoxicilna</span><i></i></div>
-            <ul class="tela__lista">
-              <li class="tela__sel"><strong>Amoxicilina</strong><span>500 mg · 250 mg/5 mL</span><em>Antibiótico</em></li>
-              <li><strong>Amoxicilina + Clavulanato</strong><span>875 mg + 125 mg · 500 mg + 125 mg</span><em>Antibiótico</em></li>
-            </ul>
-            <p class="tela__dica">Nome parecido com "amoxicilna"</p>
+    </section>
+
+    <!-- 4. Teste agora: o Pronto em miniatura, com a base real -->
+    <section class="teste" id="teste" aria-labelledby="teste-titulo">
+      <div class="teste__luz" aria-hidden="true"></div>
+      <div class="teste__texto">
+        <h2 id="teste-titulo">Teste agora. Sem conta.</h2>
+        <p>Digite um remédio, como "amox" ou "dipi". A busca é a mesma do Pronto, com a base de verdade, e aceita erro de digitação.</p>
+      </div>
+      <div class="demo" data-ui data-demo>
+        <div class="demo__cab">
+          <div>
+            <p class="demo__unidade">UPA 24h Centro</p>
+            <p class="demo__local">Plantão noturno</p>
           </div>
-          <div class="tela__estado tela__estado--1">
-            <div class="tela__busca"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><span>Amoxicilina</span></div>
-            <ul class="tela__lista">
-              <li class="tela__sel"><strong>500 mg</strong><span>cápsula · uso oral</span></li>
-              <li><strong>250 mg/5 mL</strong><span>pó para suspensão oral · uso oral</span></li>
-            </ul>
-            <div class="tela__chips"><span class="tela__chip tela__chip--sel">8/8 h · 7 dias</span><span class="tela__chip">8/8 h · 10 dias</span></div>
-            <p class="tela__linha-previa">Tomar 1 cápsula de 8 em 8 horas por 7 dias.</p>
+          <p class="demo__tipo" data-demo-tipo>Receituário</p>
+        </div>
+        <div class="demo__corpo">
+          <p class="demo__via" data-demo-via hidden>Uso oral</p>
+          <ol class="demo__itens" data-demo-itens></ol>
+          <div class="demo__busca">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+            <label class="sr" for="demo-busca">Digite um remédio</label>
+            <input id="demo-busca" type="text" autocomplete="off" spellcheck="false" placeholder="Adicionar medicamento" data-demo-busca role="combobox" aria-expanded="false" aria-controls="demo-lista" aria-autocomplete="list">
+            <span class="demo__etapa" data-demo-etapa></span>
           </div>
-          <div class="tela__estado tela__estado--2">
-            <p class="tela__via">Uso oral</p>
-            <div class="tela__item"><b>1.</b><div><strong>Amoxicilina 500 mg</strong> <span>cápsula</span><p>Tomar 1 cápsula de 8 em 8 horas por 7 dias.</p></div><em>21 cápsulas</em></div>
-            <div class="tela__item"><b>2.</b><div><strong>Dipirona 500 mg</strong> <span>comprimido</span><p>Tomar 1 comprimido de 6 em 6 horas se dor ou febre.</p></div><em>10 comprimidos</em></div>
-            <p class="tela__atb">Antimicrobiano · 2 vias · válida por 10 dias</p>
-            <div class="tela__pe"><span class="tela__ok">Receita pronta em 0:10</span><span class="tela__botoes"><span>Copiar</span><span class="tela__imprimir">Imprimir</span></span></div>
+          <ul class="demo__lista" id="demo-lista" role="listbox" data-demo-lista hidden></ul>
+        </div>
+        <div class="demo__pe">
+          <p class="demo__tempo" data-demo-tempo aria-live="polite">Clique na busca e digite um remédio.</p>
+          <div class="demo__acoes">
+            <button type="button" class="demo__btn" data-demo-limpar>Limpar</button>
+            <a class="demo__btn demo__btn--azul" href="#cadastro" data-ir-cadastro>Imprimir</a>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 4. O resto do plantão: frases com interruptores de verdade -->
-    <section class="recursos" aria-labelledby="recursos-titulo">
-      <h2 class="recursos__titulo" id="recursos-titulo">O resto do plantão também.</h2>
-      <div class="faixa faixa--a" data-faixa>
-        <div class="faixa__texto"><p class="faixa__frase">O prontuário se monta com cliques.</p><p class="faixa__efeito">Queixa, história, exame físico, hipótese e conduta, cada campo com seu Copiar para o sistema da UPA.</p></div>
-        <div class="mini" data-ui aria-hidden="true"><span class="mini__chip">QP</span><span class="mini__chip">HDA</span><span class="mini__chip">HPP</span><span class="mini__chip">Exame físico</span><span class="mini__chip">HD</span><span class="mini__chip">Conduta</span><span class="mini__copiar">Copiar</span></div>
-        <button type="button" class="chave" data-ui role="switch" aria-checked="true" aria-label="Prontuário com cliques"><span></span></button>
-      </div>
-      <div class="faixa faixa--b" data-faixa>
-        <div class="faixa__texto"><p class="faixa__frase">O modelo da sua UPA, lido de uma foto.</p><p class="faixa__efeito">Envie o receituário ou o prontuário do hospital em PDF, Word ou foto: o Pronto copia os campos e usa o topo como timbre.</p></div>
-        <div class="mini" data-ui aria-hidden="true"><span class="mini__arquivo">prontuario-upa.pdf</span><span class="mini__seta">6 campos lidos · timbre recortado</span></div>
-        <button type="button" class="chave" data-ui role="switch" aria-checked="false" aria-label="Modelo do hospital"><span></span></button>
-      </div>
-      <div class="faixa faixa--c" data-faixa>
-        <div class="faixa__texto"><p class="faixa__frase">O caso de ontem volta com um clique.</p><p class="faixa__efeito">Cada atendimento finalizado fica guardado pelo diagnóstico. No próximo caso igual, receita e prontuário que você escreveu voltam prontos.</p></div>
-        <div class="mini mini--lista" data-ui aria-hidden="true"><span><b>Síndrome gripal</b><i>14×</i></span><span><b>ITU baixa</b><i>9×</i></span><span><b>Lombalgia</b><i>7×</i></span></div>
-        <button type="button" class="chave" data-ui role="switch" aria-checked="true" aria-label="Por diagnóstico"><span></span></button>
-      </div>
-      <div class="faixa faixa--d" data-faixa>
-        <div class="faixa__texto"><p class="faixa__frase">Antibiótico já sai em duas vias.</p><p class="faixa__efeito">Uma para o paciente e outra para a retenção da farmácia, válidas por 10 dias, como a RDC 471 pede.</p></div>
-        <div class="mini mini--vias" data-ui aria-hidden="true"><span>1ª via · paciente</span><span>2ª via · retenção na farmácia</span></div>
-        <button type="button" class="chave" data-ui role="switch" aria-checked="false" aria-label="Duas vias"><span></span></button>
-      </div>
-      <div class="faixa faixa--e" data-faixa>
-        <div class="faixa__texto"><p class="faixa__frase">Nenhum paciente sai do seu aparelho.</p><p class="faixa__efeito">Nome, idade e endereço ficam só na tela e somem ao começar outra receita. Sua conta guarda seus modelos, nunca seus pacientes.</p></div>
-        <div class="mini" data-ui aria-hidden="true"><span class="mini__arquivo">Paciente do leito 4</span><span class="mini__seta">apagado ao começar outra receita</span></div>
-        <button type="button" class="chave" data-ui role="switch" aria-checked="false" aria-label="Privacidade do paciente"><span></span></button>
-      </div>
-    </section>
-
-    <!-- 5. A base: os remédios da farmácia da UPA -->
-    <section class="farmacia" aria-labelledby="farmacia-titulo">
-      <div class="farmacia__fotos">
-        <img class="farmacia__gavetas" src="assets/fotos/upa-gavetas.jpg?v=202611161824" alt="Gavetas de medicamentos na farmácia de uma UPA 24 horas" width="1024" height="446" loading="lazy">
-        <img class="farmacia__ampola" src="assets/fotos/upa-ampola.jpg?v=202611161824" alt="Ampola de medicamento identificada com código de barras, na farmácia de uma UPA" width="1024" height="768" loading="lazy">
-      </div>
-      <div class="farmacia__texto">
-        <h2 id="farmacia-titulo">A farmácia da UPA, não a de shopping.</h2>
-        <p>Os remédios de uso comum no pronto atendimento, com posologia de referência de adulto e campo para a dose pediátrica. Nada de medicamento controlado. O que você procura e não acha fica anotado para a base crescer.</p>
-        <ul class="farmacia__nomes" data-nomes aria-label="Medicamentos da base"></ul>
+    <!-- 5. Feito para o plantão: cada cartão mostra o produto, não um ícone -->
+    <section class="bento" aria-labelledby="bento-titulo">
+      <h2 class="bento__titulo" id="bento-titulo">Feito para o plantão de verdade.</h2>
+      <div class="bento__grade">
+        <article class="cartao cartao--largo" data-tilt>
+          <div class="cartao__texto">
+            <h3>Por cima de qualquer sistema</h3>
+            <p>Imprime em A4 ou copia e cola no sistema da unidade. Nada para instalar, nada para integrar.</p>
+          </div>
+          <div class="colar" aria-hidden="true">
+            <div class="colar__origem"><b>Pronto</b><span>1. Nitrofurantoína 100 mg · 20 cápsulas</span><span>Tomar 1 cápsula de 6 em 6 horas…</span><em>Copiar</em></div>
+            <div class="colar__seta"></div>
+            <div class="colar__destino"><b>Sistema da UPA</b><span class="colar__campo">Prescrição</span><span class="colar__texto">1. Nitrofurantoína 100 mg · 20 cápsulas<br>Tomar 1 cápsula de 6 em 6 horas…</span></div>
+          </div>
+        </article>
+        <article class="cartao" data-tilt>
+          <div class="vias" aria-hidden="true"><img src="assets/telas/tela-impressa.webp?v=202611161848" alt="" loading="lazy" width="1200" height="1691"><img src="assets/telas/tela-impressa.webp?v=202611161848" alt="" loading="lazy" width="1200" height="1691"><span class="vias__a">1ª via · paciente</span><span class="vias__b">2ª via · farmácia</span></div>
+          <div class="cartao__texto">
+            <h3>Antibiótico em duas vias</h3>
+            <p>A de retenção da farmácia sai junto, válida por 10 dias, como a RDC 471 pede.</p>
+          </div>
+        </article>
+        <article class="cartao" data-tilt>
+          <div class="apaga" aria-hidden="true"><span class="apaga__rotulo">Paciente</span><span class="apaga__nome">Ana Beatriz Souza</span><span class="apaga__aviso">some ao começar outra receita</span></div>
+          <div class="cartao__texto">
+            <h3>Paciente nunca sai do aparelho</h3>
+            <p>Nome, idade e endereço ficam só na tela. Sua conta guarda seus modelos, nunca seus pacientes.</p>
+          </div>
+        </article>
+        <article class="cartao" data-tilt>
+          <div class="arquivo" aria-hidden="true"><span class="arquivo__pdf">prontuario-upa.pdf</span><span class="arquivo__lido">6 campos lidos</span><span class="arquivo__lido">Timbre recortado</span></div>
+          <div class="cartao__texto">
+            <h3>O modelo da sua UPA</h3>
+            <p>Envie o receituário ou o prontuário do hospital em PDF, Word ou foto: o Pronto copia os campos e o timbre.</p>
+          </div>
+        </article>
+        <article class="cartao" data-tilt>
+          <div class="icone-app" aria-hidden="true"><img src="marca/icone-512.png" alt="" width="512" height="512" loading="lazy"><span>Pronto</span></div>
+          <div class="cartao__texto">
+            <h3>Instala como aplicativo</h3>
+            <p>Adicione à tela inicial e abra o Pronto num toque, até com a internet ruim do plantão.</p>
+          </div>
+        </article>
+        <article class="cartao cartao--largo cartao--base">
+          <div class="cartao__texto">
+            <h3>A farmácia da UPA, não a de shopping</h3>
+            <p>Os remédios de uso comum no pronto atendimento, com posologia de referência para você conferir e ajustar. Nada de controlado.</p>
+          </div>
+          <div class="esteira" aria-hidden="true" data-esteira></div>
+          <ul class="sr" data-nomes aria-label="Medicamentos da base"></ul>
+        </article>
       </div>
     </section>
 
     <!-- 6. Preço -->
     <section class="preco" id="preco" aria-labelledby="preco-titulo">
-      <h2 class="preco__titulo" id="preco-titulo">Comece de graça.</h2>
-      <table class="tabela">
-        <caption class="sr">Planos do Pronto</caption>
-        <thead>
-          <tr>
-            <th scope="col"><span class="sr">Plano</span></th>
-            <th scope="col"><span class="tabela__plano">Grátis</span><span class="tabela__valor">R$ 0</span></th>
-            <th scope="col" class="tabela__destaque"><span class="tabela__plano">Assinatura</span><span class="tabela__valor">R$ 49,90 <small>por mês</small></span></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><th scope="row">Atendimentos</th><td>10 para começar, depois 1 por dia</td><td class="tabela__destaque">Sem limite</td></tr>
-          <tr><th scope="row">Receita e prontuário</th><td>Completos</td><td class="tabela__destaque">Completos</td></tr>
-          <tr><th scope="row">Locais e modelo do hospital</th><td>Incluídos</td><td class="tabela__destaque">Incluídos</td></tr>
-          <tr><th scope="row">Por diagnóstico</th><td>Incluído</td><td class="tabela__destaque">Incluído</td></tr>
-          <tr><th scope="row">Seus modelos em qualquer aparelho</th><td>Sim</td><td class="tabela__destaque">Sim</td></tr>
-          <tr><th scope="row">Cancelamento</th><td>Não há o que cancelar</td><td class="tabela__destaque">Quando quiser, no próprio Pronto</td></tr>
-          <tr class="tabela__acoes"><th scope="row"><span class="tabela__nota">Um atendimento é a receita e o prontuário do mesmo paciente, quantas vezes forem impressos ou copiados.</span></th><td><a class="botao botao--contorno" href="#cadastro" data-ir-cadastro>Criar conta grátis</a></td><td class="tabela__destaque"><a class="botao botao--branco" href="#cadastro" data-ir-cadastro>Começar e assinar depois</a></td></tr>
-        </tbody>
-      </table>
+      <h2 class="preco__titulo" id="preco-titulo">Comece de graça. Assine quando quiser.</h2>
       <div class="planos">
-        <div class="plano">
-          <p class="plano__nome">Grátis</p><p class="plano__valor">R$ 0</p>
-          <dl><dt>Atendimentos</dt><dd>10 para começar, depois 1 por dia</dd><dt>Receita, prontuário, locais e por diagnóstico</dt><dd>Completos</dd><dt>Seus modelos em qualquer aparelho</dt><dd>Sim</dd></dl>
+        <article class="plano">
+          <h3 class="plano__nome">Grátis</h3>
+          <p class="plano__valor">R$ 0</p>
+          <p class="plano__resumo">Para conhecer e para quem faz poucos plantões.</p>
+          <ul class="plano__itens">
+            <li>10 atendimentos para começar</li>
+            <li>Depois, 1 atendimento grátis por dia</li>
+            <li>Receita, prontuário e por diagnóstico</li>
+            <li>Locais e modelo do hospital</li>
+          </ul>
           <a class="botao botao--contorno" href="#cadastro" data-ir-cadastro>Criar conta grátis</a>
-        </div>
-        <div class="plano plano--destaque">
-          <p class="plano__nome">Assinatura</p><p class="plano__valor">R$ 49,90 <small>por mês</small></p>
-          <dl><dt>Atendimentos</dt><dd>Sem limite</dd><dt>Receita, prontuário, locais e por diagnóstico</dt><dd>Completos</dd><dt>Cancelamento</dt><dd>Quando quiser, no próprio Pronto</dd></dl>
+        </article>
+        <article class="plano plano--assinatura">
+          <div class="plano__luz" aria-hidden="true"></div>
+          <h3 class="plano__nome">Assinatura</h3>
+          <p class="plano__valor">R$ 49,90 <small>por mês</small></p>
+          <p class="plano__resumo">Para quem vive de plantão.</p>
+          <ul class="plano__itens">
+            <li>Atendimentos sem limite</li>
+            <li>Tudo do plano grátis</li>
+            <li>Seus modelos em qualquer aparelho</li>
+            <li>Cancele quando quiser, no próprio Pronto</li>
+          </ul>
           <a class="botao botao--branco" href="#cadastro" data-ir-cadastro>Começar e assinar depois</a>
-        </div>
-        <p class="tabela__nota">Um atendimento é a receita e o prontuário do mesmo paciente, quantas vezes forem impressos ou copiados.</p>
+        </article>
       </div>
+      <p class="preco__nota">Um atendimento é a receita e o prontuário do mesmo paciente, quantas vezes forem impressos ou copiados.</p>
     </section>
 
     <!-- 7. Perguntas -->
@@ -303,44 +288,39 @@
     </section>
 
     <!-- 8. Cadastro -->
-    <section class="fecho" id="cadastro" aria-labelledby="fecho-titulo">
-      <div class="fecho__lado fecho__lado--foto"><img src="assets/fotos/amanhecer.jpg?v=202611161824" alt="" width="1920" height="1200" loading="lazy"></div>
-      <div class="fecho__centro">
-        <h2 id="fecho-titulo">Seu plantão começa pronto.</h2>
+    <section class="fim" id="cadastro" aria-labelledby="fim-titulo">
+      <div class="fim__luz" aria-hidden="true"></div>
+      <div class="fim__texto">
+        <h2 id="fim-titulo">Seu plantão começa pronto.</h2>
         <p>Crie a conta com seu e-mail. Os 10 primeiros atendimentos são por nossa conta.</p>
-        <form class="cadastro cadastro--fecho" data-cadastro novalidate>
-          <label class="sr" for="email-fecho">Seu e-mail</label>
-          <input id="email-fecho" name="email" type="email" inputmode="email" autocomplete="email" placeholder="seu@email.com" required>
+        <form class="cadastro cadastro--fim" data-cadastro novalidate>
+          <label class="sr" for="email-fim">Seu e-mail</label>
+          <input id="email-fim" name="email" type="email" inputmode="email" autocomplete="email" placeholder="seu@email.com" required>
           <button class="botao botao--branco" type="submit">Criar conta grátis</button>
           <p class="cadastro__nota" data-cadastro-nota>Já tem conta? <a href="app.html">Entrar</a></p>
         </form>
-        <div class="fecho__receita" data-ui aria-hidden="true">
-          <p class="fecho__unidade">UPA 24h Centro</p>
-          <p class="fecho__via">Uso oral</p>
-          <p><b>1. Dipirona 500 mg</b>, comprimido · 10 comprimidos</p>
-          <p class="fecho__uso">Tomar 1 comprimido de 6 em 6 horas se dor ou febre.</p>
-          <p><b>2. Loratadina 10 mg</b>, comprimido · 7 comprimidos</p>
-          <p class="fecho__uso">Tomar 1 comprimido 1 vez ao dia por 7 dias.</p>
-          <p class="fecho__ok">Receita pronta em 0:08</p>
-        </div>
       </div>
-      <div class="fecho__lado fecho__lado--cor"></div>
+      <img class="fim__tela" src="assets/telas/tela-receita.webp?v=202611161848" alt="" width="2400" height="1800" loading="lazy">
     </section>
   </main>
 
   <footer class="rodape">
-    <p class="rodape__o-que">Pronto · receita e prontuário do plantão</p>
+    <img src="marca/pronto-logo.svg" alt="pronto." width="96" height="32">
+    <p class="rodape__o-que">Receita e prontuário do plantão.</p>
     <nav class="rodape__links" aria-label="Rodapé">
       <a href="app.html">Entrar</a>
       <a href="app.html?demo">Demonstração</a>
       <a href="termos.html">Termos de uso</a>
+      <a href="privacidade.html">Privacidade</a>
     </nav>
-    <p class="rodape__fim">© 2026 · <a href="privacidade.html">Privacidade</a></p>
-    <p class="rodape__creditos">Fotos: <a href="https://commons.wikimedia.org/wiki/File:Dawn_in_the_winter._(19877677362).jpg">“Dawn in the winter”</a>, de Diego Torres Silvestre, <a href="https://creativecommons.org/licenses/by/2.0">CC BY 2.0</a>; <a href="https://www.flickr.com/photos/153547078@N06/54123062418">“UPA 24 horas Vila Isa”</a> e <a href="https://www.flickr.com/photos/153547078@N06/54123124289">“UPA 24 horas Vila Isa”</a>, de TCEMG, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>; <a href="https://commons.wikimedia.org/wiki/File:Unidade_de_Suporte_Avan%C3%A7ado_SAMU_Catanduva.jpg">“Unidade de Suporte Avançado SAMU Catanduva”</a>, de Guilhermerrrr, <a href="https://creativecommons.org/licenses/by/4.0">CC BY 4.0</a>; via Wikimedia Commons e Flickr.</p>
+    <p class="rodape__fim">© 2026 Pronto</p>
   </footer>
 
-  <script src="assets/dados-medicamentos.js?v=202611161824"></script>
-  <script src="assets/site.js?v=202611161824"></script>
+  <script src="assets/dados-medicamentos.js?v=202611161848"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script src="assets/site.js?v=202611161848"></script>
   <script>
     if ('serviceWorker' in navigator && !/^(localhost|127\.)/.test(location.hostname)) navigator.serviceWorker.register('sw.js');
   </script>

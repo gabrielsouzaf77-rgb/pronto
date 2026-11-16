@@ -1,7 +1,7 @@
 /*
-  Vitrine do Pronto: a demonstração ao vivo do topo (com a base real de medicamentos), o quadro da
-  noite de plantão, os passos que trocam a tela, os interruptores, o cadastro e as entradas.
-  Sem script, tudo continua legível: a demonstração mostra a busca e o resto da página é HTML.
+  Vitrine do Pronto, v2: rolagem suave (Lenis), a cena 3D do topo que endireita com a rolagem e a frase
+  que acende palavra por palavra (GSAP + ScrollTrigger), os recursos com a tela fixa, a demonstração
+  ao vivo com a base real, o bento, o cadastro e as entradas. Sem script, tudo continua legível.
 */
 (function () {
   'use strict';
@@ -12,6 +12,7 @@
   const norm = (t) => String(t ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
   const calmo = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+  const temGsap = Boolean(window.gsap && window.ScrollTrigger);
 
   const MEDS = window.RX_MEDICAMENTOS || [];
   const VIAS = window.RX_VIAS || { oral: 'Uso oral' };
@@ -22,6 +23,113 @@
   requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.add('pronto')));
   // Garantia: se o navegador segurar os quadros (aba em segundo plano), o topo aparece mesmo assim.
   setTimeout(() => document.documentElement.classList.add('pronto'), 1500);
+
+  /* ---------------------------------------------------------------- */
+  /* Rolagem suave e a barra do topo                                   */
+  /* ---------------------------------------------------------------- */
+  let lenis = null;
+  if (!calmo && window.Lenis) {
+    lenis = new window.Lenis({ lerp: 0.1, smoothWheel: true });
+    if (temGsap) {
+      lenis.on('scroll', window.ScrollTrigger.update);
+      window.gsap.ticker.add((t) => lenis.raf(t * 1000));
+      window.gsap.ticker.lagSmoothing(0);
+    } else {
+      const quadro = (t) => { lenis.raf(t); requestAnimationFrame(quadro); };
+      requestAnimationFrame(quadro);
+    }
+  }
+  const irPara = (alvo, opcoes = {}) => {
+    if (lenis) lenis.scrollTo(alvo, { offset: -90, duration: 1.2, ...opcoes });
+    else alvo.scrollIntoView({ behavior: calmo ? 'auto' : 'smooth', block: 'start' });
+  };
+  $$('a[href^="#"]').forEach((a) => {
+    if (a.hasAttribute('data-ir-cadastro')) return;
+    a.addEventListener('click', (ev) => {
+      const alvo = $(a.getAttribute('href'));
+      if (!alvo) return;
+      ev.preventDefault();
+      irPara(alvo);
+    });
+  });
+  const nav = $('[data-nav]');
+  const pintaNav = () => nav.classList.toggle('nav--rolou', window.scrollY > 10);
+  window.addEventListener('scroll', pintaNav, { passive: true });
+  pintaNav();
+
+  /* ---------------------------------------------------------------- */
+  /* Cena do topo: a janela endireita, a A4 sai, o celular sobe        */
+  /* ---------------------------------------------------------------- */
+  if (temGsap && !calmo) {
+    const { gsap, ScrollTrigger } = window;
+    gsap.registerPlugin(ScrollTrigger);
+    const mm = gsap.matchMedia();
+    mm.add('(min-width: 761px)', () => {
+      gsap.set('[data-janela]', { rotateX: 24, scale: 0.88, y: 0 });
+      gsap.timeline({ scrollTrigger: { trigger: '[data-cena]', start: 'top 85%', end: 'top 15%', scrub: 0.8 } })
+        .to('[data-janela]', { rotateX: 0, scale: 1, ease: 'none' }, 0)
+        .fromTo('[data-a4]', { y: 160, rotate: 12 }, { y: -40, rotate: 5, ease: 'none' }, 0)
+        .fromTo('[data-celular]', { y: 200, rotate: -12 }, { y: -10, rotate: -6, ease: 'none' }, 0);
+      gsap.to('.selo--tempo', { y: -60, ease: 'none', scrollTrigger: { trigger: '[data-cena]', start: 'top 60%', end: 'bottom top', scrub: true } });
+      gsap.to('.selo--copia', { y: -110, ease: 'none', scrollTrigger: { trigger: '[data-cena]', start: 'top 60%', end: 'bottom top', scrub: true } });
+      gsap.to('.selo--vias', { y: -150, ease: 'none', scrollTrigger: { trigger: '[data-cena]', start: 'top 60%', end: 'bottom top', scrub: true } });
+    });
+    mm.add('(max-width: 760px)', () => {
+      gsap.fromTo('[data-janela]', { rotateX: 16, scale: 0.94 }, { rotateX: 0, scale: 1, ease: 'none', scrollTrigger: { trigger: '[data-cena]', start: 'top 90%', end: 'top 30%', scrub: 0.8 } });
+      gsap.fromTo('[data-a4]', { y: 60 }, { y: -20, ease: 'none', scrollTrigger: { trigger: '[data-cena]', start: 'top 90%', end: 'bottom top', scrub: true } });
+      gsap.fromTo('[data-celular]', { y: 80 }, { y: -10, ease: 'none', scrollTrigger: { trigger: '[data-cena]', start: 'top 90%', end: 'bottom top', scrub: true } });
+    });
+    // Os selos chegam depois do título, um de cada vez.
+    gsap.from('[data-selo]', { opacity: 0, scale: 0.8, y: 20, duration: 0.8, ease: 'back.out(1.7)', stagger: 0.18, delay: 1.1 });
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* A frase que acende palavra por palavra                           */
+  /* ---------------------------------------------------------------- */
+  const frase = $('[data-acende]');
+  if (frase) {
+    const palavras = frase.textContent.trim().split(/\s+/);
+    frase.innerHTML = palavras.map((w) => `<span class="p">${esc(w)}</span>`).join(' ');
+    const spans = $$('.p', frase);
+    const acende = (fracao) => {
+      const n = Math.round(fracao * spans.length);
+      spans.forEach((sp, i) => sp.classList.toggle('p--acesa', i < n));
+    };
+    if (temGsap && !calmo) {
+      window.ScrollTrigger.create({ trigger: frase, start: 'top 80%', end: 'bottom 45%', scrub: true, onUpdate: (st) => acende(st.progress) });
+    } else acende(1);
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Recursos: a lista fica, a tela muda (no computador, presa à tela) */
+  /* ---------------------------------------------------------------- */
+  const itens = $$('[data-recurso]');
+  const quadros = $$('.recursos__quadro');
+  const ativar = (i) => {
+    itens.forEach((it, k) => it.classList.toggle('recurso--ativo', k === i));
+    quadros.forEach((q, k) => q.classList.toggle('recursos__quadro--on', k === i));
+  };
+  if (itens.length) {
+    let gatilho = null;
+    if (temGsap && !calmo) {
+      window.gsap.matchMedia().add('(min-width: 981px)', () => {
+        gatilho = window.ScrollTrigger.create({
+          trigger: '[data-recursos]',
+          start: 'center center',
+          end: () => '+=' + window.innerHeight * 2.2,
+          pin: true,
+          onUpdate: (st) => ativar(Math.min(itens.length - 1, Math.floor(st.progress * itens.length * 0.999))),
+        });
+        return () => { gatilho = null; };
+      });
+    }
+    itens.forEach((it, i) => it.addEventListener('click', () => {
+      if (gatilho) {
+        const y = gatilho.start + (gatilho.end - gatilho.start) * ((i + 0.5) / itens.length);
+        if (lenis) lenis.scrollTo(y, { duration: 1 }); else window.scrollTo({ top: y, behavior: 'smooth' });
+      } else ativar(i);
+    }));
+  }
 
   /* ---------------------------------------------------------------- */
   /* Demonstração: busca pelo nome, escolhe a apresentação e a posologia */
@@ -152,7 +260,7 @@
       est.opcoes = [];
       desenharItens();
       desenharLista();
-      tempoEl.textContent = 'Experimente: clique na busca e digite um remédio.';
+      tempoEl.textContent = 'Clique na busca e digite um remédio.';
       tempoEl.classList.remove('demo__tempo--ok');
     }
 
@@ -245,74 +353,39 @@
     else {
       // Começa quando o topo aparece; para se a aba some e recomeça devagar quando volta.
       const obs = new IntersectionObserver((entradas) => {
-        if (entradas.some((e) => e.isIntersecting)) { obs.disconnect(); setTimeout(rodar, 1400); }
+        if (entradas.some((e) => e.isIntersecting)) { obs.disconnect(); setTimeout(rodar, 500); }
       });
       obs.observe(demo);
     }
   }
 
   /* ---------------------------------------------------------------- */
-  /* Quadro da noite: uma linha aberta por vez                        */
+  /* A base: esteira de nomes reais e a lista para leitores de tela    */
   /* ---------------------------------------------------------------- */
-  const quadro = $('[data-quadro]');
-  if (quadro) {
-    quadro.addEventListener('click', (ev) => {
-      const botao = ev.target.closest('.quadro__linha > button');
-      if (!botao) return;
-      $$('.quadro__linha', quadro).forEach((l) => {
-        const esta = l === botao.parentElement;
-        l.classList.toggle('quadro__linha--aberta', esta);
-        $('button', l).setAttribute('aria-expanded', String(esta));
-      });
-    });
+  const esteira = $('[data-esteira]');
+  if (esteira && MEDS.length) {
+    const chip = (m) => `<span${m.antimicrobiano ? ' class="atb"' : ''}>${esc(m.nome)}</span>`;
+    const metade = Math.ceil(MEDS.length / 2);
+    const filas = [MEDS.slice(0, metade), MEDS.slice(metade)];
+    esteira.innerHTML = filas.map((f, i) => `<div class="esteira__fila${i ? ' esteira__fila--volta' : ''}">${f.map(chip).join('')}${f.map(chip).join('')}</div>`).join('');
   }
-
-  /* ---------------------------------------------------------------- */
-  /* Como funciona: o passo no meio da tela troca o estado da tela     */
-  /* ---------------------------------------------------------------- */
-  const tela = $('[data-tela]');
-  const passos = $$('[data-passo]');
-  // No celular a tela fixa não cabe ao lado: cada passo leva a sua tela logo abaixo do texto.
-  if (tela) passos.forEach((p) => {
-    const estado = $('.tela__estado--' + p.dataset.passo, tela);
-    if (!estado) return;
-    const caixa = document.createElement('div');
-    caixa.className = 'passo__tela';
-    caixa.setAttribute('aria-hidden', 'true');
-    caixa.setAttribute('data-ui', '');
-    caixa.appendChild(estado.cloneNode(true));
-    p.appendChild(caixa);
-  });
-  if (tela && passos.length && 'IntersectionObserver' in window) {
-    const obs = new IntersectionObserver((entradas) => {
-      entradas.forEach((e) => {
-        if (!e.isIntersecting) return;
-        tela.dataset.tela = e.target.dataset.passo;
-        passos.forEach((p) => p.classList.toggle('passo--ativo', p === e.target));
-      });
-    }, { rootMargin: '-45% 0px -45% 0px' });
-    passos.forEach((p) => obs.observe(p));
-  }
-
-  /* ---------------------------------------------------------------- */
-  /* Interruptores das faixas                                          */
-  /* ---------------------------------------------------------------- */
-  $$('[data-faixa]').forEach((faixa) => {
-    const chave = $('.chave', faixa);
-    const pinta = () => faixa.classList.toggle('faixa--on', chave.getAttribute('aria-checked') === 'true');
-    chave.addEventListener('click', () => {
-      chave.setAttribute('aria-checked', String(chave.getAttribute('aria-checked') !== 'true'));
-      pinta();
-    });
-    pinta();
-  });
-
-  /* ---------------------------------------------------------------- */
-  /* A base: os nomes vêm dos dados reais                              */
-  /* ---------------------------------------------------------------- */
   const nomes = $('[data-nomes]');
-  if (nomes && MEDS.length) {
-    nomes.innerHTML = MEDS.map((m) => `<li${m.antimicrobiano ? ' class="atb"' : ''}>${esc(m.nome)}</li>`).join('');
+  if (nomes && MEDS.length) nomes.innerHTML = MEDS.map((m) => `<li>${esc(m.nome)}</li>`).join('');
+
+  /* ---------------------------------------------------------------- */
+  /* Cartões que inclinam com o cursor                                  */
+  /* ---------------------------------------------------------------- */
+  if (!calmo && window.matchMedia('(pointer: fine)').matches) {
+    $$('[data-tilt]').forEach((c) => {
+      c.addEventListener('pointermove', (ev) => {
+        const r = c.getBoundingClientRect();
+        const x = (ev.clientX - r.left) / r.width - 0.5;
+        const y = (ev.clientY - r.top) / r.height - 0.5;
+        c.style.transform = `perspective(1100px) rotateX(${(-y * 4).toFixed(2)}deg) rotateY(${(x * 5).toFixed(2)}deg) translateY(-3px)`;
+      });
+      c.addEventListener('pointerleave', () => { c.style.transform = ''; });
+      c.style.transition = 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s';
+    });
   }
 
   /* ---------------------------------------------------------------- */
@@ -340,23 +413,19 @@
   });
   $$('[data-ir-cadastro]').forEach((a) => a.addEventListener('click', (ev) => {
     ev.preventDefault();
-    $('#cadastro').scrollIntoView({ behavior: calmo ? 'auto' : 'smooth', block: 'center' });
-    setTimeout(() => $('#email-fecho').focus({ preventScroll: true }), calmo ? 0 : 600);
+    irPara($('#cadastro'), { offset: -120 });
+    setTimeout(() => $('#email-fim').focus({ preventScroll: true }), calmo ? 0 : 1200);
   }));
 
   /* ---------------------------------------------------------------- */
-  /* Entradas: título, texto e imagem de cada seção, um depois do outro */
+  /* Entradas das seções                                               */
   /* ---------------------------------------------------------------- */
   if (!calmo && 'IntersectionObserver' in window) {
     const alvos = [];
-    // As perguntas e o cadastro ficam no fim: aparecem já prontos, sem depender da rolagem.
-    $$('main > section:not(.topo):not(.perguntas):not(.fecho)').forEach((sec) => {
-      $$('h2, h3, p, img, .quadro__linha, .faixa, .tabela tbody tr, .tela, .farmacia__nomes', sec).forEach((el, i) => {
-        if (el.closest('.tela__estado') || el.closest('.quadro__detalhe') || el.closest('.passo__tela')) return;
-        el.classList.add('surge');
-        el.style.setProperty('--atraso', `${Math.min(i % 6, 5) * 75}ms`);
-        alvos.push(el);
-      });
+    $$('.recursos__titulo, .teste__texto, .demo, .bento__titulo, .cartao, .preco__titulo, .plano, .perguntas__titulo, .fim__texto').forEach((el, i) => {
+      el.classList.add('surge');
+      el.style.setProperty('--atraso', `${(i % 3) * 90}ms`);
+      alvos.push(el);
     });
     const obs = new IntersectionObserver((entradas) => {
       entradas.forEach((e) => {
@@ -364,26 +433,13 @@
         e.target.classList.add('visivel');
         obs.unobserve(e.target);
       });
-    }, { rootMargin: '0px 0px 20% 0px' });
+    }, { rootMargin: '0px 0px 10% 0px' });
     alvos.forEach((el) => obs.observe(el));
-    // Rolagem muito rápida até o fim: nada fica para trás escondido.
     window.addEventListener('scroll', () => {
       if (window.scrollY + window.innerHeight < document.documentElement.scrollHeight - 40) return;
       alvos.forEach((el) => el.classList.add('visivel'));
     }, { passive: true });
-  }
-
-  // A foto do amanhecer anda um pouco mais devagar que a página.
-  const foto = $('.palco__foto');
-  if (foto && !calmo) {
-    let pedido = 0;
-    window.addEventListener('scroll', () => {
-      if (pedido) return;
-      pedido = requestAnimationFrame(() => {
-        pedido = 0;
-        const y = Math.min(window.scrollY, 1200);
-        foto.style.translate = `0 ${y * 0.12}px`;
-      });
-    }, { passive: true });
+  } else {
+    $$('.cartao').forEach((c) => c.classList.add('visivel'));
   }
 })();
